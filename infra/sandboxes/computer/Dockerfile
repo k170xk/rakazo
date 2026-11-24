@@ -35,8 +35,9 @@ FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2
 # Dev tools let bots clone repos and fetch artifacts; containers run uid 1000
 # with no privilege escalation, so nothing can be installed at runtime.
 # Compilers stay in the builder stage; heavier toolchains are a separate call.
-# The bot browser: chromium by default, or BROWSER=brave (installed below).
-ARG BROWSER=chromium
+# The bot browser: google-chrome-stable on amd64 by default (falls back to chromium on arm64),
+# or BROWSER=chromium / BROWSER=brave.
+ARG BROWSER=chrome
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     x11vnc \
@@ -52,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     libnss-wrapper \
     ca-certificates \
+    tzdata \
     procps \
     bash \
     $([ "$BROWSER" = chromium ] && echo chromium) \
@@ -85,14 +87,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && python3 -c 'import openpyxl, pandas, matplotlib; print(openpyxl.__version__, pandas.__version__, matplotlib.__version__)' \
   && groupadd --gid 1000 rakazo \
   && useradd --uid 1000 --gid rakazo --create-home --shell /bin/bash rakazo \
-  && mkdir -p /etc/rakazo/fluxbox /etc/chromium/policies/managed /etc/brave/policies/managed \
+  && mkdir -p /etc/rakazo/fluxbox /etc/opt/chrome/policies/managed /etc/chromium/policies/managed /etc/brave/policies/managed \
   && printf '%s\n' '#!/bin/sh' 'exec xsetroot -solid "#111113" "$@"' > /usr/bin/fbsetbg \
   && chmod +x /usr/bin/fbsetbg \
   && ln -sfn /bin/true /usr/bin/xmessage
-# Brave replaces Chromium only when built with BROWSER=brave. The default
-# build installs Chromium above, so this step does nothing for it.
+# Install real Google Chrome Stable on amd64 (genuine Chrome TLS/Sec-CH-UA fingerprint);
+# fall back to Debian Chromium on arm64. Brave replaces it when built with BROWSER=brave.
 RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
     case "$BROWSER" in \
+      chrome) \
+        if [ "$arch" = amd64 ]; then \
+          curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/google-chrome.deb; \
+          apt-get update; \
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends /tmp/google-chrome.deb; \
+          rm -rf /tmp/google-chrome.deb /var/lib/apt/lists/*; \
+          google-chrome-stable --version; \
+        else \
+          apt-get update; \
+          apt-get install -y --no-install-recommends chromium; \
+          rm -rf /var/lib/apt/lists/*; \
+        fi ;; \
       chromium) ;; \
       brave) \
         keyring=/usr/share/keyrings/brave-browser-archive-keyring.gpg; \
@@ -111,7 +126,7 @@ RUN set -eux; \
           '  "BraveNewsDisabled": true,' \
           '  "BraveTalkDisabled": true' \
           '}' > /etc/brave/policies/managed/rakazo.json ;; \
-      *) echo "unsupported BROWSER: $BROWSER (use chromium or brave)" >&2; exit 1 ;; \
+      *) echo "unsupported BROWSER: $BROWSER (use chrome, chromium or brave)" >&2; exit 1 ;; \
     esac
 RUN ln -s "$(dpkg -L libnss-wrapper | grep '/libnss_wrapper.so$')" /usr/local/lib/libnss_wrapper.so
 ARG TARGETARCH
@@ -152,8 +167,9 @@ ENV HOME=/home/rakazo
 # Keep UTF-8 explicit (an empty LANG broke non-ASCII file handling in the
 # file chooser for CJK-market users) and generate zh_CN.UTF-8 so deployments
 # that override the computer environment can opt in to a Chinese locale.
-RUN sed -i 's/^# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
-ENV LANG=C.UTF-8
+RUN sed -i 's/^# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/; s/^# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
+ENV LANG=C.UTF-8 \
+    TZ=Europe/Dublin
 ENV UV_TOOL_DIR=/home/rakazo/.local/share/uv/tools \
     UV_TOOL_BIN_DIR=/home/rakazo/.local/bin \
     UV_PYTHON_INSTALL_DIR=/home/rakazo/.local/share/uv/python
@@ -175,6 +191,7 @@ COPY --chmod=644 page_secrets.py /usr/local/lib/rakazo/page_secrets.py
 COPY --chmod=644 rakazo-browser.desktop /usr/share/applications/rakazo-browser.desktop
 # Rakazo keeps credentials itself; the browser's save prompts would cover pages.
 # Pop-ups open: one a page opens after making a report would be blocked unseen.
+COPY --chmod=644 browser-policy.json /etc/opt/chrome/policies/managed/rakazo-browser.json
 COPY --chmod=644 browser-policy.json /etc/chromium/policies/managed/rakazo-browser.json
 COPY --chmod=644 browser-policy.json /etc/brave/policies/managed/rakazo-browser.json
 COPY --chmod=644 fluxbox.init /etc/rakazo/fluxbox/init
@@ -239,7 +256,7 @@ RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool /opt/ocsc-extract/ocsc-extr
   && chown -R 1000:1000 /home/rakazo \
   && rm -rf /tmp/node-compile-cache /tmp/uv-*.lock
 ENV OCSC_PLAYWRIGHT_MODULE=/opt/ocsc-word/node_modules/playwright-core/index.mjs \
-    OCSC_CHROMIUM=/usr/bin/chromium \
+    OCSC_CHROMIUM=/usr/bin/google-chrome-stable \
     OCSC_SCREEN_OPEN=/usr/local/bin/rakazo-browser
 EXPOSE 7070 6080 6081 6082 6083 6084 6085 6086 6087 6088 6089 6090 6091 6092 6093 6094 6095
 # Docker exec does not inherit PID 1's exports, so every process gets the same
