@@ -406,6 +406,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
+      args:
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     working_dir: /app/apps/api
     command: ["pnpm", "db:deploy"]
     restart: "no"
@@ -421,6 +423,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
+      args:
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     # Node runs directly, not through pnpm: pnpm does not pass SIGTERM on, so a stop would kill the
     # process before its graceful shutdown finishes in-flight requests and jobs.
     working_dir: /app/apps/api
@@ -503,6 +507,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
+      args:
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/worker
     # The machine has 32 GB. The default heap stops new replies at about 4 GB while most of that sits free.
@@ -537,6 +543,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
+      args:
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/web
     command: ["node_modules/.bin/vite", "preview", "--host", "0.0.0.0", "--port", "5173"]

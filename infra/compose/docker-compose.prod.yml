@@ -415,6 +415,7 @@ services:
       dockerfile: infra/compose/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     working_dir: /app/apps/api
     command: ["pnpm", "db:deploy"]
     restart: "no"
@@ -447,6 +448,7 @@ services:
       dockerfile: infra/compose/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     restart: unless-stopped
     # Node runs directly, not through pnpm: pnpm does not pass SIGTERM on, so a stop would kill the
     # process before its graceful shutdown finishes in-flight requests and jobs.
@@ -543,6 +545,7 @@ services:
       dockerfile: infra/compose/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     restart: unless-stopped
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/worker
@@ -589,6 +592,7 @@ services:
       dockerfile: infra/compose/Dockerfile
       args:
         GIT_SHA: ${GIT_SHA:-}
+        VITE_PUSH_APP_ID: ${VITE_PUSH_APP_ID:-${ONESIGNAL_APP_ID:-}}
     restart: unless-stopped
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/web
