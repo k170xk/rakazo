@@ -17,6 +17,9 @@ import {
   APP_PROBLEM_OP,
   APP_RESPONSE,
   APP_WRITE_OPS,
+  MAX_ASK_IMAGES,
+  MAX_ASK_PROMPT,
+  MAX_EXTRACT_BASE64,
   MAX_UPLOAD_BASE64,
   readAppRequest,
   requestRef,
@@ -322,6 +325,7 @@ export function AppFrame({
               "ifc",
               ...("geolocation" in navigator ? ["location"] : []),
               ...(data.viewer.canEdit ? ["uploads"] : []),
+              ...(source.extract && data.viewer.role !== "visitor" ? ["extract"] : []),
               ...(source.ask ? ["ai"] : []),
               ...(latest.current.maps ? ["maps"] : []),
               ...(source.call
@@ -361,9 +365,36 @@ export function AppFrame({
           }
           return source.upload(String(request.name).slice(0, 120) || "photo.jpg", mime, base64);
         }
+        case "file.extract": {
+          if (!source.extract) throw new Error("File extraction is not available here.");
+          const name = String(request.name ?? "").trim().slice(0, 180);
+          const base64 = String(request.base64 ?? "");
+          if (!name || !base64 || base64.length > MAX_EXTRACT_BASE64) {
+            throw new Error("That file can't be extracted (max 20 MB).");
+          }
+          return source.extract({
+            name,
+            mime: typeof request.mime === "string" ? request.mime.slice(0, 120) : undefined,
+            base64,
+            renderPages: request.renderPages === true,
+            ocr: request.ocr === true,
+            titleBlock: request.titleBlock === true,
+            maxPages: typeof request.maxPages === "number" ? request.maxPages : undefined,
+            includeImages: request.includeImages !== false,
+          });
+        }
         case "ai.ask": {
           if (!source.ask) throw new Error("AI answers are not available here.");
-          return source.ask(String(request.prompt).slice(0, 8000), request.json === true);
+          const images = Array.isArray(request.images)
+            ? request.images
+                .filter((v): v is string => typeof v === "string" && v.startsWith("data:image/"))
+                .slice(0, MAX_ASK_IMAGES)
+            : undefined;
+          return source.ask(
+            String(request.prompt).slice(0, MAX_ASK_PROMPT),
+            request.json === true,
+            images,
+          );
         }
         case "export": {
           const format = request.format === "csv" ? "csv" : "xlsx";

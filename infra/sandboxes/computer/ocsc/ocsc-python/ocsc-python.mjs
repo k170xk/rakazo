@@ -142,7 +142,7 @@ function cmdLibs() {
   const python = findPython();
   const probe = `
 import json, sys
-mods = ["pandas", "openpyxl", "matplotlib", "PIL", "docx", "pptx", "pypdf", "pdfplumber", "xlrd", "bs4", "lxml", "numpy", "scipy"]
+mods = ["pandas", "openpyxl", "matplotlib", "PIL", "docx", "pptx", "pypdf", "pdfplumber", "fitz", "reportlab", "pytesseract", "ezdxf", "extract_msg", "pillow_heif", "xlrd", "bs4", "lxml", "numpy", "scipy"]
 installed = {}
 for m in mods:
     try:

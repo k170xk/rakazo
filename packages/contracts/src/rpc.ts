@@ -2284,13 +2284,14 @@ export const appContract = {
           peerReviewers: z.number().int().optional(),
         }),
       ),
-    /** An app's `ai.ask`, answered on the company model for the signed-in owner. */
+    /** An app's `ai.ask`, answered on the company model for the signed-in owner (with optional vision images). */
     ask: oc
       .input(
         z.strictObject({
           pageId: Id,
-          prompt: z.string().min(1).max(8000),
+          prompt: z.string().min(1).max(32_000),
           json: z.boolean().optional(),
+          images: z.array(z.string().max(2_800_000)).max(4).optional(),
         }),
       )
       .output(z.object({ answer: z.unknown() })),

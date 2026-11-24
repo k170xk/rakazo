@@ -18,6 +18,9 @@ import type {
   AppResponseMessage,
   AppRowChange,
   AppViewer,
+  ExtractedFileImage,
+  ExtractedFileResult,
+  ExtractedFileTable,
   MapPlace,
   MapStyle,
 } from "../protocol.js";
@@ -25,6 +28,9 @@ import {
   APP_EVENT,
   APP_PICK,
   APP_RESPONSE,
+  MAX_ASK_IMAGES,
+  MAX_ASK_PROMPT,
+  MAX_EXTRACT_BYTES,
   MAX_UPLOAD_BYTES,
   PYTHON_FIXTURE_URL,
   requestMessage,
@@ -59,6 +65,9 @@ export type {
   AppPresence,
   AppRowChange,
   AppViewer,
+  ExtractedFileImage,
+  ExtractedFileResult,
+  ExtractedFileTable,
   MapPlace,
   MapStyle,
   QueryResult,
@@ -908,9 +917,88 @@ export function useCanUpload(): boolean {
 export const ai = {
   /** True when the host can answer AI requests for this viewer. */
   available: () => store.init.features.includes("ai") && !store.local,
-  /** A short answer from OCSC Intelligence; with json the reply is parsed. No tools, no data access. */
-  async ask<T = string>(prompt: string, options: { json?: boolean } = {}): Promise<T> {
-    return send<T>({ op: "ai.ask", prompt: prompt.slice(0, 8000), json: options.json }, 90_000);
+  /**
+   * An answer from OCSC Intelligence; with `json` the reply is parsed as a JSON object.
+   * Pass up to 4 `data:image/...;base64,...` data URLs in `images` (e.g. a drawing title block
+   * or rendered PDF page from `files.extract`) for vision-backed extraction.
+   */
+  async ask<T = string>(
+    prompt: string,
+    options: { json?: boolean; images?: string[] } = {},
+  ): Promise<T> {
+    const images = Array.isArray(options.images)
+      ? options.images
+          .filter((v): v is string => typeof v === "string" && v.startsWith("data:image/"))
+          .slice(0, MAX_ASK_IMAGES)
+      : undefined;
+    return send<T>(
+      {
+        op: "ai.ask",
+        prompt: prompt.slice(0, MAX_ASK_PROMPT),
+        json: options.json,
+        ...(images?.length ? { images } : {}),
+      },
+      90_000,
+    );
+  },
+};
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = typeof reader.result === "string" ? reader.result : "";
+      const comma = value.indexOf(",");
+      resolve(comma >= 0 ? value.slice(comma + 1) : value);
+    };
+    reader.onerror = () => reject(new Error("Could not read that file."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+export const files = {
+  /** True when the host can extract PDF, Word, Excel, PowerPoint, CSV, DXF, email, ZIP and image files. */
+  available: () => store.init.features.includes("extract") && !store.local,
+  /**
+   * Extracts text, tables, OCR and rendered page / title-block / embedded images from an uploaded
+   * file on OCSC's offline tool runners. Nothing leaves OCSC and no network access is allowed
+   * inside the extraction sandbox.
+   */
+  async extract(
+    file: File | Blob,
+    options: {
+      name?: string;
+      renderPages?: boolean;
+      ocr?: boolean;
+      titleBlock?: boolean;
+      maxPages?: number;
+      includeImages?: boolean;
+    } = {},
+  ): Promise<ExtractedFileResult> {
+    if (!files.available()) {
+      throw new Error("File extraction is not available for this viewer.");
+    }
+    if (file.size > MAX_EXTRACT_BYTES) {
+      throw new Error("That file is larger than the 20 MB extraction limit.");
+    }
+    const name =
+      (options.name ?? ("name" in file && typeof file.name === "string" ? file.name : "")).trim() ||
+      "document.pdf";
+    const base64 = await blobToBase64(file);
+    return send<ExtractedFileResult>(
+      {
+        op: "file.extract",
+        name: name.slice(0, 180),
+        mime: file.type || "application/octet-stream",
+        base64,
+        renderPages: options.renderPages,
+        ocr: options.ocr,
+        titleBlock: options.titleBlock,
+        maxPages: options.maxPages,
+        includeImages: options.includeImages,
+      },
+      120_000,
+    );
   },
 };
 

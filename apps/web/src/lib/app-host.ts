@@ -1,5 +1,10 @@
-import type { AppViewer } from "@rakazo/app-kit/protocol";
-import { APP_CALLS_PATH, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
+import type { AppViewer, ExtractedFileResult } from "@rakazo/app-kit/protocol";
+import {
+  APP_CALLS_PATH,
+  APP_EXTRACT_PATH,
+  SHARED_APP_CALL_PATH,
+  SHARED_APP_EXTRACT_PATH,
+} from "@rakazo/app-kit/protocol";
 import type { WorkspaceSummary } from "@rakazo/app-kit/workspace";
 import type { AppData } from "@rakazo/contracts";
 import { SHARED_PAGE_PASSWORD_HEADER, SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
@@ -7,6 +12,17 @@ import type { SpaceQueries } from "./query";
 
 type Row = Record<string, unknown>;
 type Tables = AppData["tables"];
+
+export type AppExtractRequest = {
+  name: string;
+  mime?: string;
+  base64: string;
+  renderPages?: boolean;
+  ocr?: boolean;
+  titleBlock?: boolean;
+  maxPages?: number;
+  includeImages?: boolean;
+};
 
 /**
  * Where an open app reads and keeps its data. The frame never reaches the network itself: every
@@ -32,11 +48,13 @@ export type AppSource = {
   asset: (id: string) => Promise<{ mime: string; base64: string }>;
   /** Keeps a photo the person added in the app; answers with its picture id. */
   upload: (name: string, mime: string, base64: string) => Promise<{ id: string }>;
+  /** Extracts text, tables, OCR and images from an uploaded file on offline tool runners. */
+  extract?: (request: AppExtractRequest) => Promise<ExtractedFileResult>;
   exportTable: (
     table: string,
     format: "xlsx" | "csv",
   ) => Promise<{ filename: string; mime: string; base64: string }>;
-  ask?: (prompt: string, json: boolean) => Promise<unknown>;
+  ask?: (prompt: string, json: boolean, images?: string[]) => Promise<unknown>;
   /** Live changes, queries, comments, history, Evolve reads and services (APP_CALL_OPS). */
   call?: (request: Record<string, unknown>) => Promise<unknown>;
 };
@@ -97,7 +115,20 @@ export function ownerAppSource(
       return { id: saved.id };
     },
     exportTable: (table, format) => queries.apps.export.call({ pageId, table, format }),
-    ask: async (prompt, json) => (await queries.apps.ask.call({ pageId, prompt, json })).answer,
+    extract: async (request) => {
+      const response = await fetch(`${APP_EXTRACT_PATH}/${encodeURIComponent(pageId)}`, {
+        method: "POST",
+        credentials: "same-origin",
+        referrerPolicy: "no-referrer",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      if (!response.ok) throw await refused(response);
+      return (await response.json()) as ExtractedFileResult;
+    },
+    ask: async (prompt, json, images) =>
+      (await queries.apps.ask.call({ pageId, prompt, json, ...(images?.length ? { images } : {}) }))
+        .answer,
     call: (request) => postCall(`${APP_CALLS_PATH}/${encodeURIComponent(pageId)}`, {}, request),
   };
 }
@@ -215,13 +246,24 @@ export function sharedAppSource(
     call: (request) => postCall(`${base}/${SHARED_APP_CALL_PATH}`, headers, request),
     ...(signedIn
       ? {
-          ask: async (prompt: string, json: boolean) => {
+          extract: async (request: AppExtractRequest) => {
+            const response = await fetch(`${base}/${SHARED_APP_EXTRACT_PATH}`, {
+              method: "POST",
+              credentials: "same-origin",
+              referrerPolicy: "no-referrer",
+              headers: { ...headers, "content-type": "application/json" },
+              body: JSON.stringify(request),
+            });
+            if (!response.ok) throw await refused(response);
+            return (await response.json()) as ExtractedFileResult;
+          },
+          ask: async (prompt: string, json: boolean, images?: string[]) => {
             const response = await fetch(`${base}/app/ask`, {
               method: "POST",
               credentials: "same-origin",
               referrerPolicy: "no-referrer",
               headers: { ...headers, "content-type": "application/json" },
-              body: JSON.stringify({ prompt, json }),
+              body: JSON.stringify({ prompt, json, ...(images?.length ? { images } : {}) }),
             });
             if (!response.ok) throw await refused(response);
             return ((await response.json()) as { answer: unknown }).answer;

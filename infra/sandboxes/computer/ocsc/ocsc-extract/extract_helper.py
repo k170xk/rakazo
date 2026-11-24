@@ -23,11 +23,68 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".emf", ".wmf"}
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".heif", ".emf", ".wmf"}
 DIRECT_WEB_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 MAX_ZIP_FILES = 200
 MAX_ZIP_BYTES = 250 * 1024 * 1024
 MIN_PDF_IMAGE_PX = 32
+
+try:
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+except Exception:
+    pass
+
+
+def ocr_image_path(path: Path) -> str:
+    if not shutil.which("tesseract"):
+        return ""
+    try:
+        res = subprocess.run(
+            ["tesseract", str(path), "stdout", "--psm", "6"],
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+        if res.returncode == 0:
+            return res.stdout.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def crop_pdf_title_block(src: Path, page_no: int, out_path: Path, dpi: int = 200) -> dict[str, Any] | None:
+    """Render a crisp bottom-right title-block crop of a PDF drawing page."""
+    try:
+        import fitz  # PyMuPDF
+
+        doc = fitz.open(str(src))
+        try:
+            if page_no < 1 or page_no > len(doc):
+                return None
+            page = doc[page_no - 1]
+            rect = page.rect
+            # Bottom-right 42% width x 42% height covers ISO/BS/OCSC engineering drawing title blocks
+            clip = fitz.Rect(
+                rect.x0 + rect.width * 0.58,
+                rect.y0 + rect.height * 0.58,
+                rect.x1,
+                rect.y1,
+            )
+            scale = max(dpi, 200) / 72.0
+            # Cap crop dimension so huge A0 sheets don't blow memory
+            max_edge = max(clip.width, clip.height) * scale
+            if max_edge > 2400:
+                scale = 2400.0 / max(clip.width, clip.height, 1.0)
+            pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), clip=clip, alpha=False)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            pix.save(str(out_path))
+            return {"width": pix.width, "height": pix.height, "bytes": out_path.stat().st_size}
+        finally:
+            doc.close()
+    except Exception:
+        return None
 
 
 def slugify(name: str) -> str:
@@ -654,6 +711,8 @@ def extract_pdf(
     extract_images: bool,
     extract_tables: bool,
     render_pages: bool,
+    ocr: bool,
+    title_block: bool,
     page_spec: str | None,
     max_pages: int,
     dpi: int,
@@ -817,6 +876,8 @@ def extract_pdf(
         pages_to_render = parse_page_spec(page_spec, total_pages, max_pages=max_pages)
     elif scanned_pages:
         pages_to_render = scanned_pages[: min(max_pages, 10)]
+    elif ocr:
+        pages_to_render = parse_page_spec(page_spec, total_pages, max_pages=min(max_pages, 10))
 
     if pages_to_render and shutil.which("pdftoppm"):
         pages_dir = out_dir / "pages"
@@ -842,6 +903,63 @@ def extract_pdf(
                     }
                 )
     info["renderedPages"] = rendered_pages
+
+    # Engineering drawing title-block crops (requested OR auto-detected landscape A3+ drawings)
+    title_block_images: list[dict[str, Any]] = []
+    wants_tb = title_block
+    if not wants_tb and total_pages >= 1:
+        try:
+            import fitz
+
+            doc = fitz.open(str(src))
+            try:
+                r0 = doc[0].rect
+                if r0.width > r0.height and r0.width >= 590:
+                    wants_tb = True
+            finally:
+                doc.close()
+        except Exception:
+            pass
+    if wants_tb and total_pages >= 1:
+        tb_pages = parse_page_spec(page_spec, total_pages, max_pages=min(max_pages, 6))
+        pages_dir = out_dir / "pages"
+        for p_no in tb_pages:
+            tb_path = pages_dir / f"page-{p_no:03d}-titleblock.png"
+            tb_meta = crop_pdf_title_block(src, p_no, tb_path, dpi=max(dpi, 200))
+            if tb_meta:
+                title_block_images.append(
+                    {
+                        "page": p_no,
+                        "path": rel_path(tb_path, workspace),
+                        **tb_meta,
+                    }
+                )
+    if title_block_images:
+        info["titleBlockImages"] = title_block_images
+
+    # Offline OCR via tesseract when --ocr is requested OR automatically on scanned pages/title blocks
+    ocr_chunks: list[str] = []
+    if shutil.which("tesseract") and (ocr or scanned_pages):
+        scanned_set = set(scanned_pages)
+        for rp in rendered_pages:
+            if ocr or rp["page"] in scanned_set:
+                txt = ocr_image_path(workspace / rp["path"])
+                if txt:
+                    ocr_chunks.append(f"--- Page {rp['page']} (OCR) ---\n{txt}")
+        for tb in title_block_images[:4]:
+            txt = ocr_image_path(workspace / tb["path"])
+            if txt:
+                ocr_chunks.append(f"--- Page {tb['page']} Title Block (OCR) ---\n{txt}")
+        if ocr_chunks:
+            ocr_path = out_dir / "ocr.txt"
+            ocr_text = "\n\n".join(ocr_chunks)
+            ocr_path.write_text(ocr_text, encoding="utf-8")
+            info["ocrFile"] = rel_path(ocr_path, workspace)
+            info["ocrChars"] = len(ocr_text)
+            # If selectable text was nearly empty, append OCR text into text.txt so readers see it immediately
+            if not info["hasSelectableText"]:
+                existing = text_path.read_text(encoding="utf-8")
+                text_path.write_text(f"{existing}\n\n{ocr_text}".strip(), encoding="utf-8")
     return info
 
 
@@ -995,7 +1113,193 @@ def extract_legacy_doc_or_text(src: Path, out_dir: Path, workspace: Path, *, ins
     return info
 
 
-def extract_image_file(src: Path, out_dir: Path, workspace: Path, *, inspect_only: bool) -> dict[str, Any]:
+def extract_email_file(
+    src: Path,
+    out_dir: Path,
+    workspace: Path,
+    *,
+    inspect_only: bool,
+    recursive: bool,
+    options: dict[str, Any],
+) -> dict[str, Any]:
+    ext = src.suffix.lower()
+    headers: dict[str, str] = {}
+    body_text = ""
+    raw_attachments: list[tuple[str, bytes]] = []
+
+    if ext == ".eml":
+        import email
+        from email import policy
+
+        msg = email.message_from_bytes(src.read_bytes(), policy=policy.default)
+        headers = {
+            "subject": str(msg.get("subject") or ""),
+            "from": str(msg.get("from") or ""),
+            "to": str(msg.get("to") or ""),
+            "cc": str(msg.get("cc") or ""),
+            "date": str(msg.get("date") or ""),
+        }
+        plain_parts: list[str] = []
+        html_parts: list[str] = []
+        for part in msg.walk():
+            disp = str(part.get_content_disposition() or "").lower()
+            fname = part.get_filename()
+            if disp == "attachment" or fname:
+                data = part.get_payload(decode=True)
+                if data:
+                    raw_attachments.append((fname or f"attachment-{len(raw_attachments) + 1}", data))
+            elif part.get_content_type() == "text/plain":
+                payload = part.get_payload(decode=True)
+                if payload:
+                    plain_parts.append(payload.decode(part.get_content_charset() or "utf-8", errors="replace"))
+            elif part.get_content_type() == "text/html":
+                payload = part.get_payload(decode=True)
+                if payload:
+                    html_parts.append(payload.decode(part.get_content_charset() or "utf-8", errors="replace"))
+        if plain_parts:
+            body_text = "\n\n".join(plain_parts).strip()
+        elif html_parts:
+            raw_html = "\n\n".join(html_parts)
+            try:
+                from bs4 import BeautifulSoup
+
+                body_text = BeautifulSoup(raw_html, "lxml").get_text("\n", strip=True)
+            except Exception:
+                body_text = re.sub(r"<[^>]+>", " ", raw_html)
+    else:
+        import extract_msg
+
+        msg = extract_msg.Message(str(src))
+        try:
+            headers = {
+                "subject": str(msg.subject or ""),
+                "from": str(msg.sender or ""),
+                "to": str(msg.to or ""),
+                "cc": str(msg.cc or ""),
+                "date": str(msg.date or ""),
+            }
+            body_text = str(msg.body or "").strip()
+            for idx, att in enumerate(msg.attachments, 1):
+                fname = getattr(att, "longFilename", None) or getattr(att, "shortFilename", None) or f"attachment-{idx}"
+                data = getattr(att, "data", None)
+                if isinstance(data, (bytes, bytearray)) and data:
+                    raw_attachments.append((str(fname), bytes(data)))
+        finally:
+            msg.close()
+
+    info: dict[str, Any] = {
+        "source": rel_path(src, workspace),
+        "type": "email",
+        "bytes": src.stat().st_size,
+        "headers": headers,
+        "bodyChars": len(body_text),
+        "attachmentsCount": len(raw_attachments),
+        "attachmentNames": [a[0] for a in raw_attachments[:30]],
+    }
+    if inspect_only:
+        return info
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    header_lines = [f"{k.title()}: {v}" for k, v in headers.items() if v]
+    full_text = "\n".join(header_lines) + "\n\n" + body_text
+    text_path = out_dir / "text.txt"
+    text_path.write_text(full_text.strip(), encoding="utf-8")
+    info["textFile"] = rel_path(text_path, workspace)
+
+    extracted_attachments: list[dict[str, Any]] = []
+    if raw_attachments:
+        att_dir = out_dir / "attachments"
+        att_dir.mkdir(parents=True, exist_ok=True)
+        for idx, (fname, data) in enumerate(raw_attachments[:40], 1):
+            safe_name = re.sub(r"[^A-Za-z0-9._ -]+", "_", Path(fname).name).strip() or f"attachment-{idx}"
+            saved = att_dir / safe_name
+            if saved.exists():
+                saved = att_dir / f"{saved.stem}-{idx}{saved.suffix}"
+            saved.write_bytes(data)
+            entry: dict[str, Any] = {"name": safe_name, "path": rel_path(saved, workspace), "bytes": len(data)}
+            if recursive:
+                sub_opts = dict(options)
+                sub_opts["recursive"] = False
+                entry["extracted"] = extract_one(saved, out_dir / "extracted-attachments" / slugify(saved.name), workspace, sub_opts)
+            extracted_attachments.append(entry)
+    info["attachments"] = extracted_attachments
+    return info
+
+
+def extract_dxf_file(src: Path, out_dir: Path, workspace: Path, *, inspect_only: bool) -> dict[str, Any]:
+    import ezdxf
+
+    doc = ezdxf.readfile(str(src))
+    layers = [layer.dxf.name for layer in doc.layers]
+    layouts = [layout.name for layout in doc.layouts]
+    texts: list[str] = []
+    block_attrs: list[list[str]] = [["Layout", "Block", "Tag", "Value"]]
+
+    for layout in doc.layouts:
+        for ent in layout:
+            et = ent.dxftype()
+            if et == "TEXT":
+                val = str(getattr(ent.dxf, "text", "") or "").strip()
+                if val:
+                    texts.append(val)
+            elif et == "MTEXT":
+                try:
+                    val = str(ent.plain_text() or "").strip()
+                except Exception:
+                    val = str(getattr(ent, "text", "") or "").strip()
+                if val:
+                    texts.append(val)
+            elif et == "INSERT":
+                bname = str(getattr(ent.dxf, "name", "") or "")
+                for attrib in getattr(ent, "attribs", []):
+                    tag = str(getattr(attrib.dxf, "tag", "") or "").strip()
+                    val = str(getattr(attrib.dxf, "text", "") or "").strip()
+                    if tag or val:
+                        block_attrs.append([layout.name, bname, tag, val])
+
+    info: dict[str, Any] = {
+        "source": rel_path(src, workspace),
+        "type": "dxf",
+        "bytes": src.stat().st_size,
+        "layersCount": len(layers),
+        "layers": layers[:60],
+        "layouts": layouts[:20],
+        "textItemsCount": len(texts),
+        "blockAttributesCount": max(0, len(block_attrs) - 1),
+    }
+    if inspect_only:
+        return info
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    lines: list[str] = [f"Layouts: {', '.join(layouts)}", f"Layers ({len(layers)}): {', '.join(layers[:60])}", ""]
+    if len(block_attrs) > 1:
+        lines.append("=== Block Attributes (Title Block / Tags) ===")
+        for row in block_attrs[1:300]:
+            lines.append(f"[{row[0]} / {row[1]}] {row[2]}: {row[3]}")
+        lines.append("")
+        csv_path = out_dir / "tables" / "block-attributes.csv"
+        write_csv(block_attrs, csv_path)
+        info["tables"] = [
+            {
+                "name": "block-attributes",
+                "rows": len(block_attrs),
+                "columns": 4,
+                "headers": block_attrs[0],
+                "csv": rel_path(csv_path, workspace),
+            }
+        ]
+    if texts:
+        lines.append("=== Drawing Text ===")
+        lines.extend(texts[:1500])
+    text_path = out_dir / "text.txt"
+    text_path.write_text("\n".join(lines).strip(), encoding="utf-8")
+    info["textFile"] = rel_path(text_path, workspace)
+    return info
+
+
+def extract_image_file(
+    src: Path, out_dir: Path, workspace: Path, *, inspect_only: bool, ocr: bool = False
+) -> dict[str, Any]:
     w, h = image_dimensions(src)
     info: dict[str, Any] = {
         "source": rel_path(src, workspace),
@@ -1005,10 +1309,22 @@ def extract_image_file(src: Path, out_dir: Path, workspace: Path, *, inspect_onl
         "height": h,
         "path": rel_path(src, workspace),
     }
+    ocr_target = src
     if not inspect_only and src.suffix.lower() not in DIRECT_WEB_IMAGE_EXTS:
         saved = save_image_bytes(src.read_bytes(), src.name, out_dir / "images", slugify(src.name))
         if saved:
             info["convertedPng"] = rel_path(saved, workspace)
+            ocr_target = saved
+    if not inspect_only and ocr:
+        ocr_text = ocr_image_path(ocr_target)
+        if ocr_text:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            ocr_path = out_dir / "ocr.txt"
+            ocr_path.write_text(ocr_text, encoding="utf-8")
+            info["ocrFile"] = rel_path(ocr_path, workspace)
+            info["textFile"] = rel_path(ocr_path, workspace)
+            info["ocrChars"] = len(ocr_text)
+            info["preview"] = ocr_text[:600]
     return info
 
 
@@ -1018,6 +1334,8 @@ def extract_one(src: Path, out_dir: Path, workspace: Path, options: dict[str, An
     extract_images = bool(options.get("extractImages", True))
     extract_tables = bool(options.get("extractTables", True))
     render_pages = bool(options.get("renderPages", False))
+    ocr = bool(options.get("ocr", False))
+    title_block = bool(options.get("titleBlock", False))
     page_spec = options.get("pages")
     max_pages = int(options.get("maxPages", 12))
     dpi = int(options.get("dpi", 150))
@@ -1052,12 +1370,23 @@ def extract_one(src: Path, out_dir: Path, workspace: Path, options: dict[str, An
                 extract_images=extract_images,
                 extract_tables=extract_tables,
                 render_pages=render_pages,
+                ocr=ocr,
+                title_block=title_block,
                 page_spec=page_spec,
                 max_pages=max_pages,
                 dpi=dpi,
             )
         if ext in (".csv", ".tsv"):
             return extract_csv_file(src, out_dir, workspace, inspect_only=inspect_only)
+        if ext in (".eml", ".msg"):
+            return extract_email_file(
+                src, out_dir, workspace,
+                inspect_only=inspect_only,
+                recursive=recursive,
+                options=options,
+            )
+        if ext == ".dxf":
+            return extract_dxf_file(src, out_dir, workspace, inspect_only=inspect_only)
         if ext == ".zip":
             return extract_zip_file(
                 src, out_dir, workspace,
@@ -1066,7 +1395,7 @@ def extract_one(src: Path, out_dir: Path, workspace: Path, options: dict[str, An
                 options=options,
             )
         if ext in IMAGE_EXTS:
-            return extract_image_file(src, out_dir, workspace, inspect_only=inspect_only)
+            return extract_image_file(src, out_dir, workspace, inspect_only=inspect_only, ocr=ocr)
         return extract_legacy_doc_or_text(src, out_dir, workspace, inspect_only=inspect_only)
     except Exception as exc:
         return {

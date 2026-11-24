@@ -37,7 +37,7 @@ const MULTI_FILE_EXTRACT_NOTE = `EXTRACTING CONTENT, TABLES & EMBEDDED PHOTOS FR
 - Call read_file on extracted images or rendered PDF pages (work/extracted/.../*.png|*.jpg) to visually inspect them before choosing photos or reading scanned pages.
 - For merging multiple spreadsheets/CSVs, exact calculations, reconciliation, custom matplotlib charts, or cropping/resizing extracted photos, run ocsc program "python", args ["run"], spec "<python code>" (offline sandbox with pandas, openpyxl, python-docx, python-pptx, pypdf, pdfplumber, matplotlib, PIL/Pillow, xlrd, bs4, numpy). Then pass the resulting image/chart/data paths straight into ocsc pptx/word/xlsx new — always build final OCSC deliverables with ocsc-pptx / ocsc-word / ocsc-xlsx so OCSC branding is preserved.`;
 
-const EXTRACT_INSTRUCTIONS = `Use this whenever the person uploads multiple files, mixed file types (Word, PowerPoint, Excel, PDF, CSV, ZIP, legacy .doc/.xls, HTML, images), asks to extract embedded photos/images or tables from documents, uploads scanned PDFs/drawings, or asks to merge, compare, reconcile, calculate or chart data across files — all of this runs on the company document runners without needing full computer access.
+const EXTRACT_INSTRUCTIONS = `Use this whenever the person uploads multiple files, mixed file types (Word, PowerPoint, Excel, PDF, CSV, DXF CAD, Outlook .eml/.msg emails, ZIP, legacy .doc/.xls, HTML, iPhone .heic/images), asks to extract embedded photos/images or tables from documents, uploads scanned PDFs/drawings, or asks to merge, compare, reconcile, calculate or chart data across files — all of this runs on the company document runners without needing full computer access.
 
 1. FETCH UPLOADED FILES FIRST
 Call fetch_file for each attachment the person uploaded so all files are present in attachments/.
@@ -47,25 +47,27 @@ Call fetch_file for each attachment the person uploaded so all files are present
   ocsc tool: program "extract", args ["inspect", "--all"] (or "--in", "attachments/File1.docx", "--in", "attachments/File2.xlsx")
 - Full extraction across all uploaded files:
   ocsc tool: program "extract", args ["all", "--out", "work/extracted"]
-- Specific files or PDF page rendering (for drawings, figures, or scanned PDFs):
-  ocsc tool: program "extract", args ["run", "--in", "attachments/Report.pdf", "--out", "work/extracted", "--render-pages", "--pages", "1-10", "--dpi", "150"]
+- Specific files, scanned drawings, OCR, or title-block crops:
+  ocsc tool: program "extract", args ["run", "--in", "attachments/Drawing.pdf", "--out", "work/extracted", "--render-pages", "--ocr", "--title-block", "--pages", "1-10", "--dpi", "150"]
 - What ocsc extract produces in work/extracted/manifest.json:
   - Word (.docx): text.txt, every table as CSV (tables/table-NN.csv), and EVERY embedded photo/image (images/) with its section heading, alt text and dimensions.
   - PowerPoint (.pptx): text.txt, slides.json (titles, text, notes), every slide table as CSV, and EVERY embedded photo/image mapped to slide number and title.
   - Excel (.xlsx/.xlsm/.xls): every sheet exported as CSV (sheets/NN-name.csv) with headers/row counts/sample rows, plus EVERY embedded workbook image.
-  - PDF (.pdf): text.txt per page, tables via pdfplumber as CSV, embedded images via pdfimages, AND rendered PNG pages (automatically for scanned pages, or for any pages via --render-pages).
-  - CSV/TSV, legacy .doc, RTF, ODT, HTML, JSON, XML, images, and ZIP archives (safely unpacked with zip-slip protection and nested extraction).
+  - PDF (.pdf): text.txt per page, tables via pdfplumber as CSV, embedded images via pdfimages, rendered PNG pages (automatically for scanned pages, or any pages via --render-pages), offline Tesseract OCR (automatic on scanned pages or via --ocr), AND crisp bottom-right engineering drawing title-block crops (automatic on landscape A3+ drawings or via --title-block).
+  - CAD (.dxf): layers, layouts, drawing TEXT/MTEXT, and INSERT/ATTRIB block attributes (title-block tags) exported as text and CSV.
+  - Emails (.eml / .msg): headers, body text, and recursively extracted attachments.
+  - CSV/TSV, legacy .doc, RTF, ODT, HTML, JSON, XML, images (including iPhone .heic/.heif converted to PNG + optional --ocr), and ZIP archives (safely unpacked with zip-slip protection and nested extraction).
 
 3. VISUALLY INSPECT EXTRACTED PHOTOS & SCANNED PAGES
-Call read_file on any extracted PNG/JPEG/WebP image path (e.g. work/extracted/report/images/img-01.png or work/extracted/drawing/pages/page-001.png) to see what each photo or scanned page actually shows before placing it on a slide or writing captions.
+Call read_file on any extracted PNG/JPEG/WebP image path (e.g. work/extracted/report/images/img-01.png or work/extracted/drawing/pages/page-001-titleblock.png) to see what each photo, scanned page or title block actually shows before placing it on a slide or writing captions.
 
-4. MERGE, CALCULATE, CHART & PREP ASSETS WITH OFFLINE PYTHON (ocsc python)
-- Run Python directly in the isolated offline runner (no network; pandas, openpyxl, python-docx, python-pptx, pypdf, pdfplumber, matplotlib, PIL/Pillow, xlrd, bs4, lxml, numpy, scipy pre-installed):
+4. MERGE, MODIFY, CALCULATE, CHART & PREP ASSETS WITH OFFLINE PYTHON (ocsc python)
+- Run Python directly in the isolated offline runner (no network; pandas, openpyxl, python-docx, python-pptx, pypdf, pdfplumber, fitz/pymupdf, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, matplotlib, PIL/Pillow, xlrd, bs4, lxml, numpy, scipy pre-installed):
   ocsc tool: program "python", args ["run"], spec "<python script>"
   (Or write_file to work/process.py then args ["run", "--script", "work/process.py"].)
 - Check available packages anytime with program "python", args ["libs"].
-- Save processed CSVs, JSON summaries, high-res matplotlib charts (work/charts/*.png), or cropped/resized images (work/images/*.png) inside work/ or outputs/. The tool returns stdout, stderr, and filesCreated with image dimensions.
-- Use ocsc python for data wrangling, multi-file merging, calculations, custom charts, and image preparation — then build the final branded presentation, report, or workbook with ocsc pptx / ocsc word / ocsc xlsx so OCSC branding and templates stay intact.`;
+- Save merged PDFs, modified spreadsheets/CSVs, JSON summaries, high-res matplotlib charts (work/charts/*.png), or cropped/resized images (work/images/*.png) inside work/ or outputs/. The tool returns stdout, stderr, and filesCreated with image dimensions.
+- Use ocsc python for data wrangling, multi-file merging, PDF splitting/merging/cropping, calculations, custom charts, and image preparation — then build the final branded presentation, report, or workbook with ocsc pptx / ocsc word / ocsc xlsx so OCSC branding and templates stay intact.`;
 
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 

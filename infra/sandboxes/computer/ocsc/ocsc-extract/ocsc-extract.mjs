@@ -17,8 +17,8 @@ const HELPER = join(HERE, "extract_helper.py");
 const WORKSPACE = resolve(process.env.WORKSPACE_DIR || process.env.HOME || process.cwd());
 
 const USAGE = `ocsc-extract inspect --in <file> [--in <file2> ...] [--all]
-ocsc-extract run --in <file> [--in <file2> ...] [--out work/extracted] [--render-pages] [--pages 1-10] [--max-pages 12] [--dpi 150] [--no-images] [--no-tables]
-ocsc-extract all [--dir attachments] [--out work/extracted] [--render-pages] [--pages 1-10] [--dpi 150]`;
+ocsc-extract run --in <file> [--in <file2> ...] [--out work/extracted] [--render-pages] [--ocr] [--title-block] [--pages 1-10] [--max-pages 12] [--dpi 150] [--no-images] [--no-tables]
+ocsc-extract all [--dir attachments] [--out work/extracted] [--render-pages] [--ocr] [--title-block] [--pages 1-10] [--dpi 150]`;
 
 class UsageError extends Error {}
 
@@ -146,6 +146,8 @@ function main() {
         extractImages: flags["no-images"] !== true,
         extractTables: flags["no-tables"] !== true,
         renderPages: flags["render-pages"] === true,
+        ocr: flags.ocr === true,
+        titleBlock: flags["title-block"] === true,
         pages: typeof flags.pages === "string" ? flags.pages : null,
         maxPages,
         dpi,

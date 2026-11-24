@@ -176,6 +176,7 @@ import { mountAccountExportRoute } from "./account-export.js";
 import { mountAccountImportRoute } from "./account-import.js";
 import { mountAppAssociation, nativePasskeys } from "./app-association.js";
 import { appCalls, mountAppCalls } from "./app-calls.js";
+import { mountAppExtract } from "./app-extract.js";
 import { mountAppMaps } from "./app-maps.js";
 import { appServices } from "./app-services.js";
 import { mountArtifactDownloadRoute } from "./artifact-download.js";
@@ -1075,10 +1076,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         }
       : null,
   });
-  mountSharedPages(app, prisma, requestClientIp, verifiedUser, calls);
-  mountEvolveAppData(app, prisma, evolvePlugins, calls);
+  const extractDeps = { toolRunner, dataDir: env.dataDir };
+  mountSharedPages(app, prisma, requestClientIp, verifiedUser, calls, extractDeps);
+  mountEvolveAppData(app, prisma, evolvePlugins, calls, extractDeps);
   mountAppMaps(app, verifiedUser);
   mountAppCalls(app, prisma, verifiedUser, calls);
+  mountAppExtract(app, prisma, verifiedUser, extractDeps);
   const auditAuthResponse = createAuthResponseAudit();
   // Account and session tables, signup bootstrap and account deletion span tenants;
   // webhooks authenticate a bot or provider, then resolve the tenant from it.

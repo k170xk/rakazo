@@ -1,4 +1,10 @@
-import { MAX_UPLOAD_BASE64, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
+import {
+  MAX_ASK_PROMPT,
+  MAX_EXTRACT_BASE64,
+  MAX_UPLOAD_BASE64,
+  SHARED_APP_CALL_PATH,
+  SHARED_APP_EXTRACT_PATH,
+} from "@rakazo/app-kit/protocol";
 import { editsAnything } from "@rakazo/app-kit/workspace";
 import {
   PageStateWriteSchema,
@@ -8,9 +14,11 @@ import {
 import type { PrismaClient } from "@rakazo/db";
 import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Context, Hono } from "hono";
-import { AppAskError, askForApp } from "./app-ask.js";
+import { AppAskError, askForApp, sanitiseAskImages } from "./app-ask.js";
 import type { AppCalls } from "./app-calls.js";
 import { appCallFailure } from "./app-calls.js";
+import type { AppExtractDeps } from "./app-extract.js";
+import { AppExtractError, extractFileForApp, readExtractBody } from "./app-extract.js";
 import { resolveLooker, workspaceSummary } from "./app-workspaces.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
@@ -81,6 +89,8 @@ export function mountSharedPages(
   signedInUser: (request: Request) => Promise<string | null>,
   /** Live changes, queries, comments and the rest, answered as the reader the link admitted. */
   calls?: AppCalls,
+  /** Offline tool-runner extraction for signed-in colleagues. */
+  extractDeps?: AppExtractDeps,
 ) {
   const reads = windowCounter(MINUTE_MS);
   const writes = windowCounter(MINUTE_MS);
@@ -295,29 +305,66 @@ export function mountSharedPages(
     });
   });
   /** An app's AI answer, for colleagues signed in to the company; visitors with the password get none. */
-  app.post(`${SHARED_PAGE_PATH_PREFIX}:token/app/ask`, async (c) => {
-    const admitted = await admit(c);
-    if (admitted instanceof Response) return admitted;
-    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-    if (!admitted.userId) return c.json({ error: "Sign in to use AI in this app" }, 403, headers);
-    const body = (await c.req.json().catch(() => null)) as {
-      prompt?: unknown;
-      json?: unknown;
-    } | null;
-    if (typeof body?.prompt !== "string" || !body.prompt.trim() || body.prompt.length > 8000)
-      return c.json({ error: "Invalid question" }, 400, headers);
-    try {
-      const answer = await askForApp({
-        userId: admitted.userId,
-        prompt: body.prompt,
-        json: body.json === true,
-      });
-      return c.json({ answer }, 200, headers);
-    } catch (error) {
-      if (error instanceof AppAskError) return c.json({ error: error.message }, 400, headers);
-      throw error;
-    }
-  });
+  app.post(
+    `${SHARED_PAGE_PATH_PREFIX}:token/app/ask`,
+    requestBodyLimit(12 * 1024 * 1024, "That AI request is too large"),
+    async (c) => {
+      const admitted = await admit(c);
+      if (admitted instanceof Response) return admitted;
+      if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+      if (!admitted.userId) return c.json({ error: "Sign in to use AI in this app" }, 403, headers);
+      const body = (await c.req.json().catch(() => null)) as {
+        prompt?: unknown;
+        json?: unknown;
+        images?: unknown;
+      } | null;
+      if (typeof body?.prompt !== "string" || !body.prompt.trim() || body.prompt.length > MAX_ASK_PROMPT)
+        return c.json({ error: "Invalid question" }, 400, headers);
+      try {
+        const answer = await askForApp({
+          userId: admitted.userId,
+          prompt: body.prompt,
+          json: body.json === true,
+          images: sanitiseAskImages(body.images),
+        });
+        return c.json({ answer }, 200, headers);
+      } catch (error) {
+        if (error instanceof AppAskError) return c.json({ error: error.message }, 400, headers);
+        throw error;
+      }
+    },
+  );
+  /** Offline tool-runner document extraction for colleagues signed in to the company; visitors get none. */
+  app.post(
+    `${SHARED_PAGE_PATH_PREFIX}:token/${SHARED_APP_EXTRACT_PATH}`,
+    requestBodyLimit(MAX_EXTRACT_BASE64 + 32_768, "That file is too large (max 20 MB)."),
+    async (c) => {
+      const admitted = await admit(c);
+      if (admitted instanceof Response) return admitted;
+      if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+      if (!admitted.userId) {
+        return c.json({ error: "Sign in to extract files in this app" }, 403, headers);
+      }
+      if (!extractDeps?.toolRunner || !extractDeps.dataDir) {
+        return c.json({ error: "File extraction is not set up on this server." }, 503, headers);
+      }
+      const body = readExtractBody(await c.req.json().catch(() => null));
+      if (!body) return c.json({ error: "Invalid file payload." }, 400, headers);
+      try {
+        const result = await extractFileForApp(extractDeps, {
+          ...body,
+          userId: admitted.userId,
+          signal: c.req.raw.signal,
+        });
+        return c.json(result, 200, headers);
+      } catch (error) {
+        if (error instanceof AppExtractError) {
+          return c.json({ error: error.message }, error.status, headers);
+        }
+        throw error;
+      }
+    },
+  );
   app.post(
     `${SHARED_PAGE_PATH_PREFIX}:token/${SHARED_APP_CALL_PATH}`,
     requestBodyLimit(64_000, "That request is too large"),

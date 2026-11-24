@@ -76,4 +76,29 @@ describe("askForApp", () => {
       askForApp({ userId: "u1", prompt: "Hi", json: false }, failing as never),
     ).rejects.toThrow(/couldn't answer/);
   });
+
+  it("sends vision images as multimodal input blocks and ignores non-image URLs", async () => {
+    const fetchImpl = reply('{"drawingNumber":"21045-OCSC-ZZ-01-DR-C-001","revision":"P02"}');
+    const pngDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    const answer = await askForApp(
+      {
+        userId: "u1",
+        prompt: "Read the title block",
+        json: true,
+        images: [pngDataUrl, "https://evil.example/a.png", "not-an-image"],
+      },
+      fetchImpl as never,
+    );
+    expect(answer).toEqual({ drawingNumber: "21045-OCSC-ZZ-01-DR-C-001", revision: "P02" });
+    const body = JSON.parse(String(fetchImpl.mock.calls[0]![1]!.body));
+    expect(body.input).toEqual([
+      {
+        role: "user",
+        content: [
+          { type: "input_text", text: "Read the title block" },
+          { type: "input_image", image_url: pngDataUrl },
+        ],
+      },
+    ]);
+  });
 });

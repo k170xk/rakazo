@@ -350,8 +350,21 @@ workbook formula in code, read results from cells instead.
   <PhotoInput value={row.photos} onChange={(photos) => ...}/> (camera or library, shrunk before sending),
   shown with <Photos value={row.photos}/> (thumbnails that open full size). useCanUpload() says whether this
   viewer may add them; uploadImage(file) → picture id for custom pickers. Never ask for photos as URLs.
-- ai.available() / await ai.ask(prompt, {json?}) → a short answer from the company model, no tools or
-  data access: pass the rows it needs in the prompt. Use for summaries, drafting, classification.
+- files.available() / await files.extract(file, {renderPages?, ocr?, titleBlock?, maxPages?, includeImages?}) →
+  extracts text, OCR, CSV tables, embedded photos, rendered PDF pages and engineering drawing title-block crops
+  from ANY uploaded file (.pdf, .docx, .pptx, .xlsx, .xls, .csv, .dxf, .eml, .msg, .zip, .png/.jpg/.heic, up to
+  20 MB) on OCSC's authenticated, zero-network offline tool runners. Returns
+  {ok, name, kind, bytes, totalPages?, text, ocrText?, tables: [{name, headers, rows, totalRows}],
+  titleBlockImage?: {dataUrl, width, height}, pageImages: [{page, dataUrl}], images: [{name, context?, dataUrl}]}.
+  Use this whenever a user asks for a Drawing Register, PDF/title-block extractor, invoice/spec/CV/schedule
+  importer, or multi-file uploader inside an app — never tell them App Studio cannot extract PDFs or Office files.
+  Typical Drawing Register flow: let the user drop one or many PDFs/DXFs, call
+  files.extract(file, {renderPages: true, ocr: true, titleBlock: true, maxPages: 2}), then call
+  ai.ask(prompt, {json: true, images: [extracted.titleBlockImage?.dataUrl, extracted.pageImages[0]?.dataUrl].filter(Boolean)})
+  to parse drawing number, title, revision, scale, date and discipline into a reviewable draft row before insert().
+- ai.available() / await ai.ask(prompt, {json?, images?}) → answers on the company model (prompt up to 32,000 chars,
+  plus optional images: up to 4 data:image/...;base64,... data URLs from files.extract or photos for vision
+  reading of title blocks, scanned drawings, receipts or photos). With json: true, parses and returns a JSON object.
 - download(filename, text, mime) and openLink(url): call from a click.
 
 ## @ocsc/ui (Tailwind classes work everywhere; use semantic tokens, never raw hex or light-only slate/white)

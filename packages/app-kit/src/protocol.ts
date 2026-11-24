@@ -97,6 +97,40 @@ export type AppLive = {
 export const APP_SERVICES = ["weather", "rates", "holidays"] as const;
 export type AppService = (typeof APP_SERVICES)[number];
 
+export type ExtractedFileTable = {
+  name: string;
+  headers: string[];
+  rows: string[][];
+  totalRows: number;
+};
+
+export type ExtractedFileImage = {
+  name: string;
+  mime: string;
+  width?: number | null;
+  height?: number | null;
+  page?: number | null;
+  context?: string | null;
+  dataUrl: string;
+};
+
+export type ExtractedFileResult = {
+  ok: true;
+  name: string;
+  kind: string;
+  bytes: number;
+  totalPages?: number;
+  hasSelectableText?: boolean;
+  text: string;
+  ocrText?: string;
+  truncated?: boolean;
+  tables: ExtractedFileTable[];
+  titleBlockImage?: ExtractedFileImage | null;
+  pageImages: ExtractedFileImage[];
+  images: ExtractedFileImage[];
+  meta?: Record<string, unknown>;
+};
+
 export type AppRequest =
   /** accepts lists the events this app understands beyond the first ones (delta, presence). */
   | { op: "init"; accepts?: string[] }
@@ -107,7 +141,19 @@ export type AppRequest =
   | { op: "asset"; id: string }
   /** A photo the person picked, already shrunk by the app; answers with its picture id. */
   | { op: "upload"; name: string; mime: string; base64: string }
-  | { op: "ai.ask"; prompt: string; json?: boolean }
+  /** A document/drawing/spreadsheet/image/archive extracted offline on OCSC's tool runners. */
+  | {
+      op: "file.extract";
+      name: string;
+      mime?: string;
+      base64: string;
+      renderPages?: boolean;
+      ocr?: boolean;
+      titleBlock?: boolean;
+      maxPages?: number;
+      includeImages?: boolean;
+    }
+  | { op: "ai.ask"; prompt: string; json?: boolean; images?: string[] }
   | { op: "export"; table: string; format: "xlsx" | "csv" }
   | { op: "download"; filename: string; mime: string; text: string; base64?: boolean }
   /** A report printed to PDF on OCSC's template; answers once the file is saved. */
@@ -227,6 +273,7 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "state.set",
   "asset",
   "upload",
+  "file.extract",
   "ai.ask",
   "export",
   "download",
@@ -303,6 +350,13 @@ export const APP_WRITE_OPS = new Set<AppRequest["op"]>([
 export const UPLOAD_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const MAX_UPLOAD_BASE64 = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
+/** Documents/drawings/archives sent to offline tool runners for extraction (up to 20 MB raw). */
+export const MAX_EXTRACT_BYTES = 20 * 1024 * 1024;
+export const MAX_EXTRACT_BASE64 = Math.ceil(MAX_EXTRACT_BYTES / 3) * 4;
+/** Prompt and optional vision image limits for `ai.ask`. */
+export const MAX_ASK_PROMPT = 32_000;
+export const MAX_ASK_IMAGES = 4;
+export const MAX_ASK_IMAGE_BASE64 = 2_800_000;
 /** Ops that need a click or key in the frame first (downloads and links). */
 export const APP_GESTURE_OPS = new Set<AppRequest["op"]>(["download", "open", "export", "pdf"]);
 
@@ -388,3 +442,6 @@ export const APP_MAPS_PATH = "/api/app-maps";
  */
 export const APP_CALLS_PATH = "/api/app-calls";
 export const SHARED_APP_CALL_PATH = "app/call";
+/** Where signed-in staff send documents/drawings/archives for offline tool-runner extraction. */
+export const APP_EXTRACT_PATH = "/api/app-extract";
+export const SHARED_APP_EXTRACT_PATH = "app/extract";

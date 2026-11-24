@@ -201,10 +201,16 @@ COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
 COPY --from=ocsc-builder /opt/ocsc-plan /opt/ocsc-plan
 COPY --chmod=755 ocsc/ocsc-extract /opt/ocsc-extract
 COPY --chmod=755 ocsc/ocsc-python /opt/ocsc-python
-# Extra Python document libraries for ocsc-extract and offline ocsc-python data/document processing.
-RUN uv pip install --system --break-system-packages --no-cache \
+# Extra OCR + Python document/CAD/email/PDF libraries for ocsc-extract and offline ocsc-python processing.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      tesseract-ocr \
+      tesseract-ocr-eng \
+  && rm -rf /var/lib/apt/lists/* \
+  && tesseract --version | head -n 1 \
+  && uv pip install --system --break-system-packages --no-cache \
       python-docx python-pptx pypdf pdfplumber xlrd beautifulsoup4 \
-  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, pandas, openpyxl, matplotlib, PIL; print("ocsc-python libs ok")'
+      pymupdf reportlab pytesseract ezdxf extract-msg pillow-heif \
+  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, fitz, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, pandas, openpyxl, matplotlib, PIL; print("ocsc-python libs ok")'
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin

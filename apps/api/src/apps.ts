@@ -604,7 +604,7 @@ export async function ownerExportTable(
 export async function ownerAsk(
   prisma: PrismaClient,
   actor: Actor,
-  input: { pageId: string; prompt: string; json?: boolean },
+  input: { pageId: string; prompt: string; json?: boolean; images?: string[] },
 ) {
   await requireApp(prisma, actor, input.pageId);
   return {
@@ -612,6 +612,7 @@ export async function ownerAsk(
       userId: actor.userId,
       prompt: input.prompt,
       json: input.json === true,
+      images: input.images,
     }),
   };
 }
