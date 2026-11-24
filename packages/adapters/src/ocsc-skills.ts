@@ -340,13 +340,20 @@ const PLAN_INSTRUCTIONS = `Use this whenever the person wants a project programm
 
 Use the ocsc tool (document runners; no full computer needed): every ocsc-plan command below runs as the ocsc tool with program plan and the rest of the command as args, one item per word. Always use ocsc-plan. Never invent a schedule another way. ${INLINE_SPEC_NOTE}
 
-THREE-STAGE SENIOR PLANNER PROCESS (MANDATORY FOR EVERY NEW PROGRAMME)
-Never produce a quick-and-dirty generic bar chart. Every new programme (or full rebuild) MUST follow this deliberate three-stage engineering process so nothing important from the user's documents or engineering reality is ever missed:
+CHOOSE THE RIGHT WORKFLOW FIRST (TWO MODES — MATCH THE USER'S INPUT!)
+Before searching or asking anything, look at what the person actually gave you:
+- MODE A — DOCUMENT-BACKED / TENDER / ITT PROGRAMME: Use when the conversation has uploaded files (ITT, tender pack, brief, Works Requirements, drawings, spreadsheets, existing schedules) OR the person references a specific Evolve job number / named project with records in Evolve. Follow the full 3-Stage Senior Planner Process below (thorough document extraction -> Planning Dossier -> deterministic ocsc-plan build -> deadline & completeness audit).
+- MODE B — FROM-SCRATCH / EXPLORATORY PROGRAMME: Use when NO files are attached in the chat and NO Evolve job/project record is referenced (for example: "create a basic programme for a house", "draft a 6-month office fit-out schedule", "give me an indicative construction programme").
+  - DO NOT run list_conversation_files, search_conversation_files, fetch_file, or mcp__evolve__search_project_datasheets when there are no attachments and no Evolve job mentioned — there is nothing to search!
+  - DO NOT stall or interrogate the user with ask_user for a general/basic/indicative programme from scratch. Use sensible, realistic engineering defaults (e.g. starting next Monday unless they gave a date, typical UK/Irish working-day durations, practical phasing and key hold points) and build the programme straight away, then clearly list your assumptions at the end and offer to refine dates, scope or detail. (Only use ask_user on a from-scratch request if the prompt itself is genuinely ambiguous in a way that would produce the wrong kind of schedule altogether.)
+  - Skip writing a separate work/<short-name>-plan-brief.md dossier file on straightforward from-scratch requests — go straight to Stage 2 (ocsc-plan new).
+  - Scale the depth naturally to the request: ~20–35 crisp, realistic, logic-linked tasks for a straightforward single house or simple indicative programme; deeper WBS (40–100+ tasks) when they ask for a detailed or multi-stage master programme. Do NOT pad a simple house or private residential request with irrelevant public-sector bureaucracy (CWMF stages, HSE/Department sign-offs, Part 8, hospital decants, etc.).
+- TARGETED EDITS TO AN EXISTING .JANTT: Skip Stage 1 and go straight to INSPECT & EDIT.
 
 ═══════════════════════════════════════════════════════════════════════════════
-STAGE 1 — DEEP-DIVE EXTRACTION & ENGINEERING PLANNING DOSSIER (BEFORE .JANTT)
+STAGE 1 — DEEP-DIVE EXTRACTION & PLANNING DOSSIER (MODE A: DOCUMENT-BACKED ONLY)
 ═══════════════════════════════════════════════════════════════════════════════
-Do ALL extraction, missing-data checks, and WBS/task planning BEFORE touching ocsc-plan new! (For small targeted edits to an already-built .jantt, skip the dossier and go straight to INSPECT & EDIT.)
+When documents ARE provided (or an Evolve job is referenced), do ALL extraction, missing-data checks, and WBS/task planning BEFORE touching ocsc-plan new!
 
 A. INVENTORY & INTERROGATE EVERY UPLOADED DOCUMENT THOROUGHLY
 1. Check every file in the conversation first: use list_conversation_files (if more files may exist than shown), list_files, and fetch_file for any earlier attachment not yet on disk. If an Evolve job number or project name is mentioned (or linked in meta.evolve), also check mcp__evolve__search_project_datasheets for real project context.
@@ -364,22 +371,22 @@ A. INVENTORY & INTERROGATE EVERY UPLOADED DOCUMENT THOROUGHLY
    - Existing schedules (.mpp / .xml / .jantt): import or inspect directly with ocsc-plan.
    - Multi-volume tender packs (3+ large files): when run_subagent is available, dispatch parallel document-extraction helpers (one per volume/document) to extract every date, duration, stage, milestone, deliverable, review window, statutory consent, phasing rule and constraint with exact file + page/clause citations before synthesising the dossier.
 
-B. ASK ONLY WHEN CRITICAL BASELINE DATA IS GENUINELY MISSING
+B. ASK ONLY WHEN CRITICAL BASELINE DATA IS GENUINELY MISSING (MODE A)
 - ALWAYS interrogate the uploaded documents first. Never ask the person for a date, duration, stage or deliverable that is already written in their uploaded files!
-- If critical baseline parameters are genuinely NOT stated in the uploaded documents or prompt — specifically:
+- On a document-backed tender/brief, if critical baseline parameters are genuinely NOT stated anywhere in the uploaded documents or prompt — specifically:
   - Target start/appointment date AND/OR overall programme duration / completion deadline, OR
   - Which stages/scope to programme (e.g. Consultancy Design Stages only vs Full Design, Procurement, Construction & Handover), OR
   - Required phasing, sectional completions or disciplines when the brief is ambiguous —
   stop and ask concisely using ask_user BEFORE building the .jantt (1 to 3 crisp, focused questions covering only what is missing; briefly state what you DID find in their documents so they know you read them).
-- Skip ask_user when the person explicitly says to draft with assumptions ("make reasonable assumptions", "just draft it"), or in an unattended routine — and clearly flag every assumption in the dossier, task "notes", and final reply.
+- Skip ask_user when the person explicitly says to draft with assumptions ("make reasonable assumptions", "just draft it"), when working in Mode B (from scratch), or in an unattended routine — and clearly flag every assumption in task "notes" and your final reply.
 
-C. WRITE THE ENGINEERING PLANNING DOSSIER FIRST (work/<short-name>-plan-brief.md)
-Before calling ocsc-plan new, use write_file to write a concise, structured Planning Dossier to work/<short-name>-plan-brief.md (do NOT stop to ask for approval — proceed automatically to Stage 2 once written, unless critical baseline data was missing above). The dossier MUST lay out:
+C. WRITE THE ENGINEERING PLANNING DOSSIER FIRST (MODE A: work/<short-name>-plan-brief.md)
+For document-backed / tender / complex master programmes, before calling ocsc-plan new, use write_file to write a concise, structured Planning Dossier to work/<short-name>-plan-brief.md (do NOT stop to ask for approval — proceed automatically to Stage 2 once written, unless critical baseline data was missing above). The dossier MUST lay out:
 1. Contractual Anchor Facts & Citations: project start/appointment date, target completion date & stated duration (weeks/months), sectional completions, stage framework (CWMF Stages i–v / 2a–5, RIAI/RIBA 0–7, D&B, Construction), client/Department review windows, holiday/blackout periods (e.g. Christmas / builder's breaks, academic windows), and any explicit assumptions.
-2. 10-Point Completeness Audit (explicitly verify EVERY item — zero silly omissions):
+2. 10-Point Completeness Audit (verify EVERY item relevant to the project type — zero silly omissions):
    (1) Contractual anchor dates, tender/clarification/award/14-day Remedies standstill, site possession, total duration, Substantial/Practical Completion, 12-month Defects Liability Period, and hard funding/operational stops.
    (2) Mandated stage framework & contractual stage gates.
-   (3) Client, Department, HSE, Board & Cost Check review/approval windows between stages (NEVER omit — they sit directly on the Critical Path!).
+   (3) Client, Department, HSE, Board & Cost Check review/approval windows between stages (NEVER omit when applicable — they sit directly on the Critical Path!).
    (4) Phasing, sectional completions, enabling packages & decant sequences.
    (5) Site constraints, live-campus/hospital/school/holiday blackouts & seasonal ecological windows (bird nesting Mar–Aug, bat surveys May–Sep, roadworks embargoes, archaeology).
    (6) Surveys & site investigations (Topographical, GI/geotechnical, GPR/utilities, drainage CCTV, measured/laser scan, asbestos/pre-demolition, traffic, ecology/AA/NIS, flood risk, acoustic/daylight, dilapidation).
@@ -387,13 +394,13 @@ Before calling ocsc-plan new, use write_file to write a concise, structured Plan
    (8) Utilities & long-lead procurement (early ESB Networks/UK DNO, Uisce Éireann, GNI, telecoms applications & lead-ins; steelwork, precast/hollowcore, façade/curtain walling, MV/LV switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS).
    (9) Discipline deliverables per stage (Civil, Structural, Mechanical, Electrical, Environmental, Fire, Acoustics, Traffic), BIM Execution Plan (BEP) / ISO 19650 Information Exchanges / clash detection, Cost Plans / VE, NZEB / Part L / BER / BREEAM / LEED / Whole Life Carbon.
    (10) Commissioning, Soft Landings & BCAR Close-Out (Permanent Power-On, flushing/balancing, BMS & Fire Life-Safety cause-and-effect witness testing, seasonal commissioning, O&M manuals, As-Built BIM/drawings, Safety File, BCAR Certificate of Compliance on Completion with statutory 21-day validation window, client training, snagging & handover).
-3. Complete Discipline-by-Discipline WBS & Task Register: plan the full task breakdown at real engineering depth (typically 30–55 tasks for a focused design/consultancy commission, 60–150+ tasks for a full multi-year CSME design, procurement & construction master programme — NEVER a shallow 15-task boilerplate!). For every task list: systematic ID, WBS code, Phase/Sub-phase, Discipline category, realistic working-day/week duration (or calendar days for statutory notices/standstill), predecessor logic (FS/SS/FF + lag), fixed contractual pin date if any, and exact source clause/page citation (or "Assumed").
+3. Complete Discipline-by-Discipline WBS & Task Register: plan the full task breakdown at real engineering depth (typically 30–55 tasks for a focused design/consultancy commission, 60–150+ tasks for a full multi-year CSME design, procurement & construction master programme — NEVER a shallow 15-task boilerplate on a major brief!). For every task list: systematic ID, WBS code, Phase/Sub-phase, Discipline category, realistic working-day/week duration (or calendar days for statutory notices/standstill), predecessor logic (FS/SS/FF + lag), fixed contractual pin date if any, and exact source clause/page citation (or "Assumed").
 4. Pre-Build Duration & Critical Path Sanity Check: check that the planned phases, review windows, statutory/utility lead times, overlaps and holiday breaks realistically reconcile to the contractual duration before generating JSON.
 
 ═══════════════════════════════════════════════════════════════════════════════
-STAGE 2 — DETERMINISTIC SCHEDULE GENERATION WITH OCSC-PLAN
+STAGE 2 — DETERMINISTIC SCHEDULE GENERATION WITH OCSC-PLAN (BOTH MODES A & B)
 ═══════════════════════════════════════════════════════════════════════════════
-Translate your Stage 1 Planning Dossier into a clean, logic-linked .jantt using ocsc-plan's built-in working-day PDM scheduler so dates, weekends, holidays and critical path math are 100% deterministic (never guess calendar math in your head!).
+Build a clean, logic-linked .jantt using ocsc-plan's built-in working-day PDM scheduler so dates, weekends, holidays and critical path math are 100% deterministic (never guess calendar math in your head!).
 
 1. LET OCSC-PLAN CALCULATE DATES FROM DURATIONS & LOGIC (PREFERRED)
 - Set top-level anchor fields in your ocsc-plan new spec:
@@ -496,19 +503,16 @@ Programme: set_baseline (saves the current dates as the baseline for all tasks, 
 3. Run: ocsc-plan edit --in <path>.jantt --spec work/<short-name>-edits.json --out outputs/<Name>-v2.jantt
 
 ═══════════════════════════════════════════════════════════════════════════════
-STAGE 3 — DEADLINE RECONCILIATION, COMPLETENESS AUDIT & DELIVERY
+STAGE 3 — LOGIC CHECK, DEADLINE RECONCILIATION & DELIVERY (BOTH MODES A & B)
 ═══════════════════════════════════════════════════════════════════════════════
 Every ocsc-plan new and ocsc-plan edit returns a "schedule" object with projectStart, projectFinish, targetFinish, finishVarianceDays, onTarget, dependencyCount, criticalCount, criticalLinks, criticalChain, healthGrade, and any warnings (unlinkedLeafTasks, openStartTasks, openFinishTasks, summaryLinkWarnings).
-- ALWAYS run ALL THREE checks before calling attach_file!
-  1. Logic check: if dependencyCount is 0, criticalLinks is 0 on a multi-task plan, summaryLinkWarnings is non-empty, or unintended unlinkedLeafTasks / openFinishTasks exist, run an ocsc-plan edit pass with link_tasks / unlink_tasks to close the logic network first.
-  2. Deadline reconciliation check: check "finishVarianceDays" against "targetFinish". If finishVarianceDays > 0 (the programme overruns the ITT/brief deadline), examine "criticalChain" and run an ocsc-plan edit pass to introduce realistic engineering overlaps (SS + lag), parallel statutory/design packages, or earlier long-lead procurement until it reconciles — OR if the stated deadline is genuinely unachievable even with realistic overlaps, keep honest engineering durations and clearly highlight the exact overrun and driving critical bottleneck in your summary!
-  3. Dossier completeness check: verify every phase, milestone, sectional completion, client review window, survey, statutory consent, utility lead-in, holiday/blackout window, and BCAR/handover/DLP item captured in work/<short-name>-plan-brief.md is actually present and linked in the .jantt. Fix any omission with ocsc-plan edit and re-audit before attaching.
-- When you reply to the person, include a crisp Programme Basis & Verification Summary covering:
-  1. Source documents reviewed (file names and key clauses/pages extracted),
-  2. Programme span (Start -> Completion, total duration) and variance against ITT/brief target dates,
-  3. Driving Critical Path, key contractual milestones & sectional completions,
-  4. Schedule health grade, logic counts, and key float/risk pinch points,
-  5. Any assumptions made or missing items not found in the uploaded documents for the person to confirm.
+- ALWAYS check logic before calling attach_file:
+  1. Logic & Critical Path check (ALWAYS): if dependencyCount is 0, criticalLinks is 0 on a multi-task plan, summaryLinkWarnings is non-empty, or unintended unlinkedLeafTasks / openFinishTasks exist, run an ocsc-plan edit pass with link_tasks / unlink_tasks to close the logic network first.
+  2. Deadline reconciliation check (when a targetFinish / deadline was given): check "finishVarianceDays" against "targetFinish". If finishVarianceDays > 0 (the programme overruns the target deadline), examine "criticalChain" and run an ocsc-plan edit pass to introduce realistic engineering overlaps (SS + lag), parallel statutory/design packages, or earlier long-lead procurement until it reconciles — OR if the stated deadline is genuinely unachievable even with realistic overlaps, keep honest engineering durations and clearly highlight the exact overrun and driving critical bottleneck in your summary!
+  3. Dossier completeness check (Mode A — document-backed): verify every phase, milestone, sectional completion, client review window, survey, statutory consent, utility lead-in, holiday/blackout window, and BCAR/handover/DLP item captured in work/<short-name>-plan-brief.md is actually present and linked in the .jantt. Fix any omission with ocsc-plan edit and re-audit before attaching.
+- When you reply to the person, include a crisp Programme Summary covering:
+  - In Mode A (document-backed): source documents reviewed (files & key clauses/pages), programme span vs target dates, driving Critical Path & key milestones, schedule health/logic summary, and any assumptions or items not found in the documents to confirm.
+  - In Mode B (from-scratch): programme span & total duration, driving Critical Path & key milestones, key assumptions made (start date, working week, scope boundaries, typical durations), and a quick prompt inviting them to share specific dates, constraints or documents if they want to tailor it further.
 Save each round as a new version unless they ask you to overwrite. If a run returns "ok": false, fix the spec and retry — do not invent a new plan file unless they asked for a separate one. In a studio, every attach_file is a new version in the document's History, so the person can compare and restore any earlier version.
 
 IMPORTING EXISTING SCHEDULES (CSV / MS PROJECT)
