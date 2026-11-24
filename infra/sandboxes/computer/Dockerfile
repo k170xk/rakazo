@@ -208,9 +208,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && tesseract --version | head -n 1 \
   && uv pip install --system --break-system-packages --no-cache \
-      python-docx python-pptx pypdf pdfplumber xlrd beautifulsoup4 \
+      "numpy<2" python-docx python-pptx pypdf pdfplumber xlrd beautifulsoup4 \
       pymupdf reportlab pytesseract ezdxf extract-msg pillow-heif \
-  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, fitz, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, pandas, openpyxl, matplotlib, PIL; print("ocsc-python libs ok")'
+  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, pymupdf, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, pandas, openpyxl, matplotlib, PIL, numpy, scipy; print("ocsc-python libs ok")'
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
