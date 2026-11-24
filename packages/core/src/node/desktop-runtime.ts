@@ -310,6 +310,7 @@ export function stopBrowserProfileCommand(profile: string, pidFile: string) {
     `if browser_running; then echo 'browser still running' >&2; exit ${BROWSER_STILL_RUNNING_EXIT}; fi`,
     `rm -f ${pidFile}`,
     `rm -f ${shellQuote(profile)}/SingletonLock ${shellQuote(profile)}/SingletonCookie ${shellQuote(profile)}/SingletonSocket`,
+    `if command -v rakazo-browser-sync >/dev/null 2>&1; then rakazo-browser-sync save ${shellQuote(profile)} >/dev/null 2>&1 || true; fi`,
   ].join("\n");
 }
 

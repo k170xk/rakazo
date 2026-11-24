@@ -22,6 +22,8 @@ import {
 export const COMPUTER_IMAGE_WORKSPACE = "/home/rakazo";
 const WORKSPACE = COMPUTER_IMAGE_WORKSPACE;
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
+/** Larger single-file cap for full workspace saves (e.g. engineering PDFs/decks). */
+const MAX_EXPORT_FILE_BYTES = 256 * 1024 * 1024;
 /** How long the `timeout` wrapper waits after SIGTERM before it kills the command's process group. */
 export const COMMAND_KILL_AFTER_MS = 5_000;
 const BULK_TRANSFER_TIMEOUT_MS = 30 * 60_000;
@@ -221,7 +223,7 @@ export class ExecComputer {
       [
         "bash",
         "-c",
-        `cd ${shellQuote(WORKSPACE)} && ${workspaceSaveFindCommand()} -printf '%P\\0'`,
+        `cd ${shellQuote(WORKSPACE)} && ${workspaceSaveFindCommand()} -size -${MAX_EXPORT_FILE_BYTES + 1}c -printf '%P\\0'`,
       ],
       context,
     );
@@ -232,7 +234,7 @@ export class ExecComputer {
       .split("\0")
       .filter((name) => name && !shouldSkipPortableWorkspaceFile(name));
     if (names.length === 0) return;
-    const reader = new TarReader(MAX_FILE_BYTES);
+    const reader = new TarReader(MAX_EXPORT_FILE_BYTES);
     const list = Buffer.from(names.map((name) => `${name}\0`).join(""));
     let code = 1;
     let stderr = "";

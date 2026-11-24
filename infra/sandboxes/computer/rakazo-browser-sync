@@ -1,0 +1,541 @@
+#!/usr/bin/env python3
+"""Sync Chromium auth state across per-chat profiles inside one user's container.
+
+Each user already has a private container and home archive; nothing leaves
+$HOME/.browser-profiles. This keeps logins (Cookies, Local Storage, IndexedDB,
+Session Storage), saved passwords (Login Data), and Bookmarks consistent across
+all chats and across sleep/wake checkpoints without sharing SingletonLock across
+concurrent displays.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import fcntl
+import json
+import os
+import shutil
+import sqlite3
+import sys
+import tarfile
+import tempfile
+import time
+
+LOCK_PATH = "/tmp/rakazo/browser-profile-sync.lock"
+SESSION_DIR_NAME = "user-session"
+WEB_STORAGE_ARCHIVE = "web-storage.tar.gz"
+WEB_STORAGE_DIRS = ("Local Storage", "IndexedDB", "Session Storage")
+SKIP_STORAGE_NAMES = {"LOCK", "LOG", "LOG.old"}
+
+COOKIE_KEY_COLS = (
+    "host_key",
+    "top_frame_site_key",
+    "has_cross_site_ancestor",
+    "name",
+    "path",
+    "source_scheme",
+    "source_port",
+)
+LOGIN_KEY_COLS = (
+    "origin_url",
+    "username_element",
+    "username_value",
+    "password_element",
+    "signon_realm",
+)
+
+
+@contextlib.contextmanager
+def sync_lock(timeout_s: float = 3.0):
+    os.makedirs(os.path.dirname(LOCK_PATH), exist_ok=True)
+    fd = os.open(LOCK_PATH, os.O_CREAT | os.O_RDWR, 0o600)
+    deadline = time.monotonic() + timeout_s
+    acquired = False
+    try:
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                acquired = True
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(0.05)
+        yield acquired
+    finally:
+        if acquired:
+            with contextlib.suppress(OSError):
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        with contextlib.suppress(OSError):
+            os.close(fd)
+
+
+def profiles_root() -> str:
+    home = os.environ.get("HOME") or os.path.expanduser("~")
+    return os.path.realpath(os.path.join(home, ".browser-profiles"))
+
+
+def is_managed_profile(profile_dir: str, root: str) -> bool:
+    real = os.path.realpath(profile_dir)
+    base = os.path.basename(real)
+    return os.path.dirname(real) == root and base != SESSION_DIR_NAME and base.startswith("chromium")
+
+
+def db_mtime(path: str) -> float:
+    best = 0.0
+    for suffix in ("", "-wal", "-journal"):
+        p = path + suffix
+        try:
+            st = os.stat(p)
+            if st.st_size > 0 or suffix == "":
+                best = max(best, st.st_mtime)
+        except OSError:
+            pass
+    return best
+
+
+def dir_tree_mtime(base_dir: str, subdirs: tuple[str, ...]) -> float:
+    best = 0.0
+    for sub in subdirs:
+        p = os.path.join(base_dir, sub)
+        if not os.path.isdir(p):
+            continue
+        for root, _, files in os.walk(p):
+            for name in files:
+                if name in SKIP_STORAGE_NAMES:
+                    continue
+                with contextlib.suppress(OSError):
+                    st = os.stat(os.path.join(root, name))
+                    best = max(best, st.st_mtime)
+    return best
+
+
+def has_leveldb_data(default_dir: str) -> bool:
+    ldb_dir = os.path.join(default_dir, "Local Storage", "leveldb")
+    if not os.path.isdir(ldb_dir):
+        return False
+    try:
+        for name in os.listdir(ldb_dir):
+            if name.endswith(".log") or name.endswith(".ldb"):
+                if os.path.getsize(os.path.join(ldb_dir, name)) > 0:
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def snapshot_sqlite(src_path: str, dst_path: str) -> bool:
+    if not os.path.isfile(src_path) or os.path.getsize(src_path) == 0:
+        return False
+    src_conn = None
+    dst_conn = None
+    try:
+        src_conn = sqlite3.connect(f"file:{src_path}?mode=ro", uri=True, timeout=2.0)
+        dst_conn = sqlite3.connect(dst_path, timeout=2.0)
+        src_conn.backup(dst_conn)
+        dst_conn.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        if dst_conn is not None:
+            with contextlib.suppress(Exception):
+                dst_conn.close()
+        if src_conn is not None:
+            with contextlib.suppress(Exception):
+                src_conn.close()
+
+
+def atomic_replace_db(src_snapshot: str, dst_path: str) -> None:
+    os.makedirs(os.path.dirname(dst_path), mode=0o700, exist_ok=True)
+    tmp_dst = f"{dst_path}.sync.{os.getpid()}"
+    shutil.copy2(src_snapshot, tmp_dst)
+    os.chmod(tmp_dst, 0o600)
+    os.replace(tmp_dst, dst_path)
+    for suffix in ("-journal", "-wal", "-shm"):
+        with contextlib.suppress(OSError):
+            os.unlink(dst_path + suffix)
+
+
+def table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
+    return [row[1] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()]
+
+
+def merge_table(
+    src_db: str,
+    dst_db: str,
+    table: str,
+    key_candidates: tuple[str, ...],
+    ts_candidates: tuple[str, ...],
+    exclude_cols: tuple[str, ...] = (),
+) -> bool:
+    src = sqlite3.connect(src_db, timeout=2.0)
+    dst = sqlite3.connect(dst_db, timeout=2.0)
+    try:
+        src_cols = table_columns(src, table)
+        dst_cols = table_columns(dst, table)
+        if not src_cols or not dst_cols:
+            return False
+        common = [c for c in dst_cols if c in src_cols and c not in exclude_cols]
+        keys = [c for c in key_candidates if c in common]
+        ts_cols = [c for c in ts_candidates if c in common]
+        if not keys:
+            return False
+
+        col_list = ", ".join(f'"{c}"' for c in common)
+        placeholders = ", ".join("?" for _ in common)
+        where_key = " AND ".join(f'"{k}" IS ?' for k in keys)
+        key_idx = [common.index(k) for k in keys]
+        ts_idx = [common.index(t) for t in ts_cols]
+
+        dst_index: dict[tuple, int] = {}
+        for row in dst.execute(f'SELECT {col_list} FROM "{table}"'):
+            k = tuple(row[i] for i in key_idx)
+            ts = max((int(row[i] or 0) for i in ts_idx), default=0)
+            dst_index[k] = ts
+
+        changed = False
+        dst.execute("BEGIN")
+        for row in src.execute(f'SELECT {col_list} FROM "{table}"'):
+            k = tuple(row[i] for i in key_idx)
+            src_ts = max((int(row[i] or 0) for i in ts_idx), default=0)
+            existing_ts = dst_index.get(k)
+            if existing_ts is None:
+                dst.execute(
+                    f'INSERT OR REPLACE INTO "{table}" ({col_list}) VALUES ({placeholders})',
+                    row,
+                )
+                dst_index[k] = src_ts
+                changed = True
+            elif src_ts > existing_ts:
+                dst.execute(f'DELETE FROM "{table}" WHERE {where_key}', k)
+                dst.execute(
+                    f'INSERT OR REPLACE INTO "{table}" ({col_list}) VALUES ({placeholders})',
+                    row,
+                )
+                dst_index[k] = src_ts
+                changed = True
+        if changed:
+            dst.commit()
+        else:
+            dst.rollback()
+        return True
+    except Exception:
+        with contextlib.suppress(Exception):
+            dst.rollback()
+        return False
+    finally:
+        with contextlib.suppress(Exception):
+            src.close()
+        with contextlib.suppress(Exception):
+            dst.close()
+
+
+def sync_sqlite_db(src_path: str, dst_path: str, db_name: str, prefer_newer_fallback: bool) -> None:
+    if not os.path.isfile(src_path) or os.path.getsize(src_path) == 0:
+        return
+    with tempfile.TemporaryDirectory(prefix="rakazo-db-sync-") as td:
+        snap = os.path.join(td, "snap.sqlite")
+        if not snapshot_sqlite(src_path, snap):
+            return
+        if not os.path.isfile(dst_path) or os.path.getsize(dst_path) == 0:
+            atomic_replace_db(snap, dst_path)
+            return
+
+        merged = False
+        if db_name == "Cookies":
+            merged = merge_table(
+                snap,
+                dst_path,
+                "cookies",
+                COOKIE_KEY_COLS,
+                ("last_update_utc", "last_access_utc", "creation_utc"),
+            )
+        elif db_name in ("Login Data", "Login Data For Account"):
+            merged = merge_table(
+                snap,
+                dst_path,
+                "logins",
+                LOGIN_KEY_COLS,
+                ("date_password_modified", "date_last_used", "date_created"),
+                exclude_cols=("id",),
+            )
+        if not merged and prefer_newer_fallback and db_mtime(src_path) > db_mtime(dst_path):
+            atomic_replace_db(snap, dst_path)
+
+
+def pack_web_storage(default_dir: str, archive_path: str) -> bool:
+    present = [d for d in WEB_STORAGE_DIRS if os.path.isdir(os.path.join(default_dir, d))]
+    if not present:
+        return False
+    os.makedirs(os.path.dirname(archive_path), mode=0o700, exist_ok=True)
+    tmp_path = f"{archive_path}.tmp.{os.getpid()}"
+    try:
+        with tarfile.open(tmp_path, "w:gz") as tf:
+            for sub in present:
+                full = os.path.join(default_dir, sub)
+                for root, dirs, files in os.walk(full):
+                    rel_root = os.path.relpath(root, default_dir)
+                    for name in files:
+                        if name in SKIP_STORAGE_NAMES:
+                            continue
+                        file_path = os.path.join(root, name)
+                        if not os.path.isfile(file_path):
+                            continue
+                        with contextlib.suppress(OSError):
+                            tf.add(file_path, arcname=os.path.join(rel_root, name), recursive=False)
+        os.chmod(tmp_path, 0o600)
+        os.replace(tmp_path, archive_path)
+        return True
+    except Exception:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        return False
+
+
+def unpack_web_storage(archive_path: str, target_default: str) -> bool:
+    if not os.path.isfile(archive_path):
+        return False
+    try:
+        with tempfile.TemporaryDirectory(prefix="rakazo-ws-unpack-") as td:
+            with tarfile.open(archive_path, "r:gz") as tf:
+                for member in tf.getmembers():
+                    if not member.isfile():
+                        continue
+                    norm = os.path.normpath(member.name)
+                    top = norm.split(os.sep, 1)[0]
+                    if top not in WEB_STORAGE_DIRS or norm.startswith("..") or os.path.isabs(norm):
+                        continue
+                    if os.path.basename(norm) in SKIP_STORAGE_NAMES:
+                        continue
+                    out = os.path.join(td, norm)
+                    os.makedirs(os.path.dirname(out), mode=0o700, exist_ok=True)
+                    src_f = tf.extractfile(member)
+                    if src_f is None:
+                        continue
+                    with src_f, open(out, "wb") as dst_f:
+                        shutil.copyfileobj(src_f, dst_f)
+            for sub in WEB_STORAGE_DIRS:
+                src_sub = os.path.join(td, sub)
+                if not os.path.isdir(src_sub):
+                    continue
+                dst_sub = os.path.join(target_default, sub)
+                shutil.rmtree(dst_sub, ignore_errors=True)
+                shutil.copytree(src_sub, dst_sub)
+        return True
+    except Exception:
+        return False
+
+
+def copy_web_storage_dirs(src_default: str, target_default: str) -> bool:
+    copied_any = False
+    for sub in WEB_STORAGE_DIRS:
+        src_sub = os.path.join(src_default, sub)
+        if not os.path.isdir(src_sub):
+            continue
+        dst_sub = os.path.join(target_default, sub)
+        tmp_sub = f"{dst_sub}.sync.{os.getpid()}"
+        shutil.rmtree(tmp_sub, ignore_errors=True)
+        try:
+            shutil.copytree(
+                src_sub,
+                tmp_sub,
+                ignore=shutil.ignore_patterns(*SKIP_STORAGE_NAMES),
+                ignore_dangling_symlinks=True,
+            )
+            shutil.rmtree(dst_sub, ignore_errors=True)
+            os.replace(tmp_sub, dst_sub)
+            copied_any = True
+        except Exception:
+            shutil.rmtree(tmp_sub, ignore_errors=True)
+    return copied_any
+
+
+def read_meta(session_dir: str) -> dict:
+    try:
+        with open(os.path.join(session_dir, "meta.json"), "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def write_meta(session_dir: str, meta: dict) -> None:
+    path = os.path.join(session_dir, "meta.json")
+    tmp = f"{path}.tmp.{os.getpid()}"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(meta, f)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except Exception:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+
+
+def cmd_save(profile_dir: str) -> None:
+    root = profiles_root()
+    if not is_managed_profile(profile_dir, root):
+        return
+    src_default = os.path.join(os.path.realpath(profile_dir), "Default")
+    if not os.path.isdir(src_default):
+        return
+
+    session_dir = os.path.join(root, SESSION_DIR_NAME)
+    session_default = os.path.join(session_dir, "Default")
+    os.makedirs(session_default, mode=0o700, exist_ok=True)
+
+    for db_name in ("Cookies", "Login Data", "Login Data For Account", "Web Data"):
+        sync_sqlite_db(
+            os.path.join(src_default, db_name),
+            os.path.join(session_default, db_name),
+            db_name,
+            prefer_newer_fallback=True,
+        )
+
+    src_bm = os.path.join(src_default, "Bookmarks")
+    dst_bm = os.path.join(session_default, "Bookmarks")
+    if os.path.isfile(src_bm) and os.path.getsize(src_bm) > 0:
+        if not os.path.isfile(dst_bm) or os.path.getmtime(src_bm) >= os.path.getmtime(dst_bm):
+            tmp_bm = f"{dst_bm}.tmp.{os.getpid()}"
+            with contextlib.suppress(Exception):
+                shutil.copy2(src_bm, tmp_bm)
+                os.replace(tmp_bm, dst_bm)
+
+    meta = read_meta(session_dir)
+    ws_mtime = dir_tree_mtime(src_default, WEB_STORAGE_DIRS)
+    archive_path = os.path.join(session_dir, WEB_STORAGE_ARCHIVE)
+    prev_ws_mtime = float(meta.get("webStorageMtime") or 0.0)
+    if ws_mtime > 0 and (not os.path.isfile(archive_path) or ws_mtime >= prev_ws_mtime):
+        if pack_web_storage(src_default, archive_path):
+            meta["webStorageMtime"] = ws_mtime
+            meta["lastSavedProfile"] = os.path.basename(os.path.realpath(profile_dir))
+    meta["updatedAt"] = time.time()
+    write_meta(session_dir, meta)
+
+
+def cmd_seed(target_profile: str) -> None:
+    root = profiles_root()
+    if not is_managed_profile(target_profile, root):
+        return
+    target_real = os.path.realpath(target_profile)
+    target_default = os.path.join(target_real, "Default")
+    os.makedirs(target_default, mode=0o700, exist_ok=True)
+
+    session_dir = os.path.join(root, SESSION_DIR_NAME)
+    session_default = os.path.join(session_dir, "Default")
+
+    candidates: list[str] = []
+    if os.path.isdir(session_default):
+        candidates.append(session_default)
+    if os.path.isdir(root):
+        for entry in sorted(os.listdir(root)):
+            if entry == SESSION_DIR_NAME or not entry.startswith("chromium"):
+                continue
+            cand_real = os.path.realpath(os.path.join(root, entry))
+            if cand_real == target_real:
+                continue
+            cand_default = os.path.join(cand_real, "Default")
+            if os.path.isdir(cand_default):
+                candidates.append(cand_default)
+
+    # 1. Seed / merge SQLite databases (newest first for schema init, then merge all).
+    for db_name in ("Cookies", "Login Data", "Login Data For Account", "Web Data"):
+        sources = [
+            (db_mtime(os.path.join(c, db_name)), os.path.join(c, db_name))
+            for c in candidates
+            if os.path.isfile(os.path.join(c, db_name))
+            and os.path.getsize(os.path.join(c, db_name)) > 0
+        ]
+        if not sources:
+            continue
+        sources.sort(key=lambda item: item[0], reverse=True)
+        dst_db = os.path.join(target_default, db_name)
+        target_exists = os.path.isfile(dst_db) and os.path.getsize(dst_db) > 0
+        target_ts = db_mtime(dst_db) if target_exists else 0.0
+
+        # If target DB does not exist yet, initialize from newest source first so
+        # Chromium's exact schema and meta table are preserved verbatim.
+        if not target_exists:
+            sync_sqlite_db(sources[0][1], dst_db, db_name, prefer_newer_fallback=True)
+            for _, src_path in sources[1:]:
+                sync_sqlite_db(src_path, dst_db, db_name, prefer_newer_fallback=False)
+        else:
+            for src_ts, src_path in sources:
+                if src_ts > target_ts + 1.0 or db_name in ("Cookies", "Login Data", "Login Data For Account"):
+                    sync_sqlite_db(src_path, dst_db, db_name, prefer_newer_fallback=False)
+
+    # 2. Seed Bookmarks if missing in target.
+    dst_bm = os.path.join(target_default, "Bookmarks")
+    if not os.path.isfile(dst_bm):
+        bm_sources = [
+            (os.path.getmtime(os.path.join(c, "Bookmarks")), os.path.join(c, "Bookmarks"))
+            for c in candidates
+            if os.path.isfile(os.path.join(c, "Bookmarks"))
+            and os.path.getsize(os.path.join(c, "Bookmarks")) > 0
+        ]
+        if bm_sources:
+            bm_sources.sort(key=lambda item: item[0], reverse=True)
+            tmp_bm = f"{dst_bm}.tmp.{os.getpid()}"
+            with contextlib.suppress(Exception):
+                shutil.copy2(bm_sources[0][1], tmp_bm)
+                os.replace(tmp_bm, dst_bm)
+
+    # 3. Seed or restore Web Storage (Local Storage / IndexedDB / Session Storage).
+    # Note: workspace-save-policy skips *.log files, so after a sleep/wake an existing
+    # profile's Local Storage/leveldb directory can be missing its 000003.log file;
+    # restoring from user-session/web-storage.tar.gz recovers it cleanly.
+    target_ws_mtime = dir_tree_mtime(target_default, WEB_STORAGE_DIRS)
+    target_missing_storage = not has_leveldb_data(target_default)
+
+    archive_path = os.path.join(session_dir, WEB_STORAGE_ARCHIVE)
+    meta = read_meta(session_dir)
+    best_kind = ""
+    best_mtime = 0.0
+    best_src = ""
+
+    if os.path.isfile(archive_path) and os.path.getsize(archive_path) > 0:
+        arch_mtime = float(meta.get("webStorageMtime") or os.path.getmtime(archive_path))
+        if arch_mtime > best_mtime:
+            best_kind = "archive"
+            best_mtime = arch_mtime
+            best_src = archive_path
+
+    for cand_default in candidates:
+        if cand_default == session_default:
+            continue
+        if not has_leveldb_data(cand_default):
+            continue
+        cand_mtime = dir_tree_mtime(cand_default, WEB_STORAGE_DIRS)
+        if cand_mtime > best_mtime:
+            best_kind = "dir"
+            best_mtime = cand_mtime
+            best_src = cand_default
+
+    if best_kind and (target_missing_storage or best_mtime > target_ws_mtime + 2.0):
+        if best_kind == "archive":
+            unpack_web_storage(best_src, target_default)
+        else:
+            copy_web_storage_dirs(best_src, target_default)
+
+
+def main() -> int:
+    if len(sys.argv) < 3:
+        return 0
+    action = sys.argv[1]
+    profile_dir = sys.argv[2]
+    try:
+        with sync_lock() as acquired:
+            if not acquired:
+                return 0
+            if action == "save":
+                cmd_save(profile_dir)
+            elif action == "seed":
+                cmd_seed(profile_dir)
+    except Exception as exc:
+        print(f"rakazo-browser-sync: {exc}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

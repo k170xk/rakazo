@@ -49,7 +49,7 @@ describe.skipIf(process.env.RUN_COMPUTER_REPLAY_DOCKER !== "1")(
                 'eval "$(dbus-launch --sh-syntax)"; test -n "$DBUS_SESSION_BUS_ADDRESS"; ' +
                 'kill "$DBUS_SESSION_BUS_PID"; ' +
                 'fc-list | grep -q "Noto Color Emoji"; ' +
-                'python3 -c \'import json; assert json.load(open("/etc/chromium/policies/managed/rakazo-browser.json"))["PasswordManagerEnabled"] is False\'',
+                'python3 -c \'import json; assert json.load(open("/etc/chromium/policies/managed/rakazo-browser.json"))["PasswordManagerEnabled"] is True\'',
             ],
             { encoding: "utf8", timeout: 15_000 },
           );

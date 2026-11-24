@@ -458,7 +458,7 @@ const FIND_MISSING_DESKTOP_TOOLS = [
  * that are the bot's own computer are prepared with it, never the person's own computer.
  */
 export const BROWSER_POLICY = JSON.stringify({
-  PasswordManagerEnabled: false,
+  PasswordManagerEnabled: true,
   AutofillAddressEnabled: false,
   AutofillCreditCardEnabled: false,
   DefaultPopupsSetting: 1,

@@ -413,6 +413,12 @@ if [ -d "$ACTUAL_PROFILE" ]; then
   fi
 fi
 
+# Seed this profile with the user's latest cookies, saved passwords, and web storage
+# before Chromium starts, only when no live browser already holds this profile.
+if [ -z "$live_pid" ] && ! profile_lock_is_live "$ACTUAL_PROFILE" && command -v rakazo-browser-sync >/dev/null 2>&1; then
+  rakazo-browser-sync seed "$ACTUAL_PROFILE" >/dev/null 2>&1 || true
+fi
+
 # Chromium's singleton hand-off hangs with the image's NSS wrapper loaded.
 # Match the per-screen launcher: preserve other space- or colon-separated preload entries.
 if [ -n "${LD_PRELOAD:-}" ]; then

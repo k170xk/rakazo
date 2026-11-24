@@ -1,5 +1,5 @@
 {
-  "PasswordManagerEnabled": false,
+  "PasswordManagerEnabled": true,
   "AutofillAddressEnabled": false,
   "AutofillCreditCardEnabled": false,
   "DefaultPopupsSetting": 1
