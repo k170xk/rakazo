@@ -133,6 +133,15 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(page.getByTestId("user-settings")).toHaveAttribute("data-settings-section", "usage");
   await expect(page.getByTestId("usage-settings")).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-shell-usage");
+
+  const notifications = await openUserSettings(page, "notifications");
+  await expect(notifications).toHaveAttribute("data-settings-section", "notifications");
+  await expect(notifications.getByTestId("notifications-settings")).toBeVisible();
+  await expect(notifications.getByTestId("settings-nav-notifications")).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await captureScreenshot(page, testInfo, "settings-shell-notifications");
 });
 
 test("Memory settings do not offer an external provider", async ({ page }, testInfo) => {

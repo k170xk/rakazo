@@ -146,6 +146,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "MessagingInstallation",
   "MessagingInstallSession",
   "MessagingOutbound",
+  "NotificationIntent",
   "ExternalConversation",
   "ExternalMessage",
   "SteeringMessage",

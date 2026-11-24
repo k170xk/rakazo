@@ -13,13 +13,28 @@ const lingui = vi.hoisted(() => ({
 vi.mock("@lingui/react/macro", () => lingui);
 vi.mock("@lingui/react", () => lingui);
 
+const updatePreferences = vi.hoisted(() => vi.fn(async () => ({ inApp: true, push: true })));
+vi.mock("../lib/rpc", () => ({
+  rpc: {
+    notifications: {
+      updatePreferences,
+    },
+  },
+}));
+
 vi.mock("@rakazo/ui-web", () => {
   const Passthrough = ({
     children,
     ...props
   }: { children?: ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div>;
   return {
-    AlertDialog: Passthrough,
+    AlertDialog: ({
+      children,
+      open,
+    }: {
+      children?: ReactNode;
+      open?: boolean;
+    }) => (open ? <div>{children}</div> : null),
     AlertDialogAction: ({
       children,
       onClick,
@@ -77,6 +92,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   FakeNotification.permission = "default";
   FakeNotification.requestPermission.mockClear();
+  updatePreferences.mockClear();
   vi.stubGlobal("Notification", FakeNotification);
   host = document.createElement("div");
   document.body.append(host);
@@ -91,7 +107,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-it("opens after a short delay, then requests permission from Turn on", async () => {
+it("opens after a short delay with approved copy, then enables preferences before permission", async () => {
   const onEnabled = vi.fn();
   await act(async () =>
     root.render(<EnableNotificationsDialog userId="user-1" ready onEnabled={onEnabled} />),
@@ -101,7 +117,14 @@ it("opens after a short delay, then requests permission from Turn on", async () 
   await act(async () => {
     vi.advanceTimersByTime(1_200);
   });
-  expect(host.querySelector('[data-testid="enable-notifications-dialog"]')).not.toBeNull();
+  const dialog = host.querySelector('[data-testid="enable-notifications-dialog"]');
+  expect(dialog).not.toBeNull();
+  expect(dialog?.textContent).toContain("Stay in the loop");
+  expect(dialog?.textContent).toContain(
+    "Get notified when a bot needs you or finishes important work.",
+  );
+  expect(dialog?.textContent).toContain("Enable notifications");
+  expect(dialog?.textContent).toContain("Not now");
 
   const enable = host.querySelector(
     '[data-testid="enable-notifications-enable"]',
@@ -109,6 +132,7 @@ it("opens after a short delay, then requests permission from Turn on", async () 
   await act(async () => enable.click());
   await act(async () => undefined);
 
+  expect(updatePreferences).toHaveBeenCalledWith({ inApp: true, push: true });
   expect(FakeNotification.requestPermission).toHaveBeenCalledTimes(1);
   expect(onEnabled).toHaveBeenCalledTimes(1);
   expect(localStorage.getItem("rakazo:notifications-prompt:v1:user-1")).toBe("1");

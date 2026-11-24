@@ -36,10 +36,12 @@ const RESPONSE_TOO_LARGE = "Expo push response is too large.";
 export function expoPushData(message: NotificationMessage, spaceId: string, deliveryId: string) {
   return {
     kind: message.kind,
+    ...(message.category ? { category: message.category } : {}),
     ...(message.sender ? { sender: message.sender } : {}),
     botId: message.botId,
     threadId: message.threadId,
     ...(message.runId ? { runId: message.runId } : {}),
+    ...(message.messageId ? { messageId: message.messageId } : {}),
     deliveryId,
     ...(spaceId ? { spaceId } : {}),
     ...(message.groupId ? { groupId: message.groupId } : {}),

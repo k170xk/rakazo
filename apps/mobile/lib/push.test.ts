@@ -78,6 +78,7 @@ beforeEach(async () => {
   vi.stubGlobal("fetch", fetch);
   fetch.mockClear();
   vi.mocked(Notifications.requestPermissionsAsync).mockClear();
+  vi.mocked(Notifications.getPermissionsAsync).mockClear();
   permission = deferred();
   // iOS answers both from the system's notification settings, which can take minutes
   // after a restart. Reading them waits on the native queue; the request does not.
@@ -95,9 +96,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("push registration on iOS", () => {
-  it("loads the inbox while notification settings have not answered", async () => {
+describe("push registration consent", () => {
+  it("does not ask iOS for permission until the user consents", async () => {
     void registerPushToken();
+    await settled(Promise.resolve());
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalledWith(
+      expect.stringMatching(/notifications\/registerPush$/),
+      expect.anything(),
+    );
+  });
+
+  it("loads the inbox while a consented request has not answered", async () => {
+    void registerPushToken({ requestPermission: true });
 
     // The inbox's first load: the space list and account, then the default space.
     const loaded = Promise.all([rpc("spaces/list"), rpc("me")]).then(async ([, me]) =>
@@ -107,8 +118,8 @@ describe("push registration on iOS", () => {
     await expect(settled(loaded)).resolves.toBe(true);
   });
 
-  it("registers the token once permission is granted", async () => {
-    void registerPushToken();
+  it("registers the token once a consented request is granted", async () => {
+    void registerPushToken({ requestPermission: true });
     await settled(Promise.resolve());
     expect(fetch).not.toHaveBeenCalledWith(
       expect.stringMatching(/notifications\/registerPush$/),
@@ -126,6 +137,7 @@ describe("push registration on iOS", () => {
       ),
     );
   });
+
 });
 
 describe("push registration on Android", () => {
@@ -137,6 +149,23 @@ describe("push registration on Android", () => {
 
     expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
     expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/notifications\/registerPush$/),
+      expect.anything(),
+    );
+  });
+
+  it("does not prompt when permission is missing and consent was not given", async () => {
+    Platform.OS = "android";
+    vi.mocked(Notifications.getPermissionsAsync).mockResolvedValue({
+      granted: false,
+      status: "undetermined",
+      canAskAgain: true,
+    } as never);
+
+    await registerPushToken();
+
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalledWith(
       expect.stringMatching(/notifications\/registerPush$/),
       expect.anything(),
     );

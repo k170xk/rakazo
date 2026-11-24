@@ -13,6 +13,7 @@ import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { BrowserNotificationPermission } from "../lib/browser-notifications";
 import {
+  hasSeenBrowserNotificationsPrompt,
   markBrowserNotificationsPromptSeen,
   requestBrowserNotificationPermission,
   shouldOfferBrowserNotificationsPrompt,
@@ -21,7 +22,9 @@ import {
   nativePushAvailable,
   nativePushPermissionState,
   requestNativePushPermission,
+  syncNativePushUser,
 } from "../lib/capacitor-push";
+import { rpc } from "../lib/rpc";
 
 const OFFER_DELAY_MS = 1_200;
 
@@ -57,16 +60,17 @@ export function EnableNotificationsDialog({
         : typeof Notification === "undefined"
           ? undefined
           : Notification.permission;
-      if (
-        cancelled ||
-        !shouldOfferBrowserNotificationsPrompt({
+      const unseen = !hasSeenBrowserNotificationsPrompt(userId);
+      // A native "denied" before the person has answered is often the plugin reporting
+      // that it cannot ask yet. Still show the invitation once. A real OS refusal is
+      // handled from Enable, which opens system settings when the prompt cannot appear.
+      const offer =
+        shouldOfferBrowserNotificationsPrompt({
           userId,
           permission,
           blockedByOverlay,
-        })
-      ) {
-        return;
-      }
+        }) || Boolean(native && permission === "denied" && unseen && !blockedByOverlay);
+      if (cancelled || !offer) return;
       timer = window.setTimeout(() => setOpen(true), OFFER_DELAY_MS);
     })();
     return () => {
@@ -75,7 +79,7 @@ export function EnableNotificationsDialog({
     };
   }, [ready, userId, blockedByOverlay, open, native]);
 
-  if (!open || !userId) return null;
+  if (!userId) return null;
 
   const dismiss = () => {
     markBrowserNotificationsPromptSeen(userId);
@@ -88,8 +92,15 @@ export function EnableNotificationsDialog({
     markBrowserNotificationsPromptSeen(userId);
     void (async () => {
       try {
-        if (native) await requestNativePushPermission();
-        else await requestBrowserNotificationPermission();
+        await rpc.notifications
+          .updatePreferences({ inApp: true, push: true })
+          .catch(() => undefined);
+        if (native) {
+          const granted = await requestNativePushPermission();
+          if (granted) await syncNativePushUser(userId).catch(() => undefined);
+        } else {
+          await requestBrowserNotificationPermission();
+        }
         onEnabled?.();
       } finally {
         setBusy(false);
@@ -100,7 +111,7 @@ export function EnableNotificationsDialog({
 
   return (
     <AlertDialog
-      open
+      open={open}
       onOpenChange={(next) => {
         if (!next && !busy) dismiss();
       }}
@@ -111,20 +122,10 @@ export function EnableNotificationsDialog({
             <Bell className="size-5" aria-hidden />
           </div>
           <AlertDialogTitle>
-            <Trans>Stay up to date</Trans>
+            <Trans>Stay in the loop</Trans>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {native ? (
-              <Trans>
-                Get notified when your work finishes or an agent needs your input — even when the
-                app is in the background.
-              </Trans>
-            ) : (
-              <Trans>
-                Get notified when your work finishes, an agent needs your input, or a routine
-                completes — even when you are in another tab.
-              </Trans>
-            )}
+            <Trans>Get notified when a bot needs you or finishes important work.</Trans>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -143,7 +144,7 @@ export function EnableNotificationsDialog({
               enable();
             }}
           >
-            {busy ? <Trans>Turning on…</Trans> : <Trans>Turn on notifications</Trans>}
+            {busy ? <Trans>Turning on…</Trans> : <Trans>Enable notifications</Trans>}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

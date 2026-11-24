@@ -15,6 +15,7 @@ import { UpdatesSettingsPanel, UsageSettingsPanel } from "./AccountSettingsOverl
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { MessagingSettingsPanel } from "./MessagingSettingsPanel";
+import { NotificationsSettingsPanel } from "./NotificationsSettingsPanel";
 import { OrganizationSettingsPanel } from "./OrganizationSettingsPanel";
 import { PaymentWalletSettingsPanel } from "./PaymentWalletSettingsPanel";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
@@ -354,6 +355,7 @@ export function SettingsOverlay({
                     />
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
+                  {section === "notifications" ? <NotificationsSettingsPanel /> : null}
                   {section === "vault" && personalVaultEnabled ? <PersonalVault /> : null}
                   {section === "email" && emailEnabled ? (
                     <div className="space-y-8">

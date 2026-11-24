@@ -40,6 +40,8 @@ export * from "./messaging.js";
 export * from "./model-credentials.js";
 export * from "./model-credits.js";
 export * from "./model-roles.js";
+export * from "./notification-intents.js";
+export * from "./notification-preferences.js";
 export * from "./organizations.js";
 export * from "./page-shares.js";
 export * from "./provider-transactions.js";

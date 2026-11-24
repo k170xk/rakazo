@@ -483,6 +483,7 @@ model Space {
   artifacts                   Artifact[]
   pages                       Page[]
   notificationPreferences     NotificationPreference[]
+  notificationIntents         NotificationIntent[]
   computers                   Computer[]
   computerRuns                ComputerRun[]
   externalEffects             ExternalEffect[]
@@ -2401,16 +2402,54 @@ model InfraSample {
 }
 
 model NotificationPreference {
-  id       String  @id @default(cuid())
-  spaceId  String
-  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  userId   String
-  finish   Boolean @default(true)
-  help     Boolean @default(true)
-  takeover Boolean @default(true)
+  id           String  @id @default(cuid())
+  spaceId      String
+  space        Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId       String
+  finish       Boolean @default(true)
+  help         Boolean @default(true)
+  takeover     Boolean @default(true)
+  inApp        Boolean @default(true)
+  push         Boolean @default(true)
+  actionNeeded Boolean @default(true)
+  updates      Boolean @default(true)
+  problems     Boolean @default(true)
 
   @@unique([spaceId, userId])
   @@map("notification_preferences")
+}
+
+/// Durable outbox row for a run alert. Survives a crash after the run commit so
+/// a background worker can still enforce preferences and deliver or skip.
+model NotificationIntent {
+  id             String    @id @default(cuid())
+  spaceId        String
+  space          Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId         String
+  botId          String
+  threadId       String
+  groupId        String?
+  runId          String?
+  messageId      String?
+  sourceEventKey String
+  kind           String
+  category       String
+  title          String
+  body           String
+  status         String    @default("pending")
+  attempts       Int       @default(0)
+  nextAttemptAt  DateTime?
+  claimedBy      String?
+  claimedAt      DateTime?
+  deliveryId     String?
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, sourceEventKey])
+  @@index([status, nextAttemptAt])
+  @@index([spaceId, userId, status])
+  @@map("notification_intents")
 }
 
 model SpaceMemoryConfig {

@@ -435,6 +435,8 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
     body: safeText,
     botId: bot.id,
     threadId: thread.id,
+    runId,
+    ...(paused.messageId ? { messageId: paused.messageId } : {}),
   });
 }
 
@@ -471,7 +473,7 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
   }
   // Give the user a full idle period to answer before the computer may suspend.
   scheduleComputerSleep(deps.jobs, ctx.computer.stored.id);
-  await publishMessage(
+  const takeoverMessage = await publishMessage(
     deps,
     run,
     "bot",
@@ -509,6 +511,8 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
     body: safeReason,
     botId: bot.id,
     threadId: thread.id,
+    runId,
+    ...(takeoverMessage?.id ? { messageId: takeoverMessage.id } : {}),
   });
 }
 
@@ -1099,6 +1103,7 @@ export async function failRun(
       body: message,
       botId: bot.id,
       threadId: thread.id,
+      runId: run.id,
     });
   }
 }

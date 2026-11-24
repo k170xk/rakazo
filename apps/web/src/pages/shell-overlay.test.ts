@@ -18,6 +18,11 @@ describe("readShellOverlay", () => {
 
   it("opens a settings section, falling back to Work Space for bare, general or unknown values", () => {
     expect(read("?settings=voice")).toEqual({ kind: "settings", section: "voice", spaceId: null });
+    expect(read("?settings=notifications")).toEqual({
+      kind: "settings",
+      section: "notifications",
+      spaceId: null,
+    });
     expect(read("?settings=space&space=sp_1")).toEqual({
       kind: "settings",
       section: "space",

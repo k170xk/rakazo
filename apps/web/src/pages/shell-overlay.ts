@@ -9,6 +9,7 @@ const SETTINGS_SECTIONS = [
   "memory",
   "voice",
   "confirmations",
+  "notifications",
   "vault",
   "email",
   "messaging",

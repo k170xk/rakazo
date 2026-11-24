@@ -24,6 +24,8 @@ type NativePushPlugin = {
     permission?: boolean;
   }>;
   getPermission?(): Promise<{ permission?: boolean }>;
+  /** Raw OS status: 0 not determined, 1 denied, 2 authorised, 3 provisional, 4 ephemeral. */
+  permissionNative?(): Promise<{ permission?: number }>;
   canRequestPermission?(): Promise<{ canRequest?: boolean }>;
   addListener(
     event: string,
@@ -36,6 +38,9 @@ export type NativePushChatTarget = {
   botId?: string;
   groupId?: string;
   threadId?: string;
+  messageId?: string;
+  runId?: string;
+  category?: string;
   kind?: string;
 };
 
@@ -136,14 +141,27 @@ export async function syncNativePushUser(userId: string | null | undefined): Pro
   boundUserId = null;
 }
 
+function permissionFromNativeCode(
+  code: number | undefined,
+): "default" | "granted" | "denied" | undefined {
+  if (code === 2 || code === 3 || code === 4) return "granted";
+  if (code === 1) return "denied";
+  if (code === 0) return "default";
+  return undefined;
+}
+
 export async function nativePushPermissionState(): Promise<"default" | "granted" | "denied"> {
   const native = await ensureInitialized();
-  if (!native) return "denied";
+  // The plugin not being ready is not an OS refusal. Treat it as not-yet-asked so the
+  // first-run invitation still appears; Enable no-ops until the plugin can prompt.
+  if (!native) return "default";
   try {
-    const current = await native.getPermission?.();
-    if (current?.permission) return "granted";
-    const canRequest = await native.canRequestPermission?.();
-    if (canRequest?.canRequest === false) return "denied";
+    const coded = permissionFromNativeCode((await native.permissionNative?.())?.permission);
+    if (coded) return coded;
+    if ((await native.getPermission?.())?.permission) return "granted";
+    // `canRequest === false` is also what the plugin reports before it has read the
+    // system status. That is not a denial, and hiding the invitation on it means the
+    // person is never asked.
     return "default";
   } catch {
     return "default";
@@ -159,6 +177,17 @@ export async function requestNativePushPermission(): Promise<boolean> {
     return Boolean(result?.permission);
   } catch {
     return false;
+  }
+}
+
+/** Opens the OS notification settings when permission was previously denied. */
+export async function openNativePushSettings(): Promise<void> {
+  const native = await ensureInitialized();
+  if (!native?.requestPermission) return;
+  try {
+    await native.requestPermission({ fallbackToSettings: true });
+  } catch {
+    // Settings may be unavailable on some devices; the row still shows the blocked state.
   }
 }
 
@@ -215,18 +244,27 @@ export function nativePushOpenTarget(event: unknown): NativePushChatTarget | nul
     ...(botId ? { botId } : {}),
     ...(groupId ? { groupId } : {}),
     ...(field("threadId") ? { threadId: field("threadId") } : {}),
+    ...(field("messageId") ? { messageId: field("messageId") } : {}),
+    ...(field("runId") ? { runId: field("runId") } : {}),
+    ...(field("category") ? { category: field("category") } : {}),
     ...(field("kind") ? { kind: field("kind") } : {}),
   };
 }
 
 export function nativePushChatPath(target: NativePushChatTarget): string | null {
-  if (target.groupId) return `/app/g/${encodeURIComponent(target.groupId)}`;
-  if (target.botId) {
-    return target.threadId
+  let path: string | null = null;
+  if (target.groupId) path = `/app/g/${encodeURIComponent(target.groupId)}`;
+  else if (target.botId) {
+    path = target.threadId
       ? `/app/${encodeURIComponent(target.botId)}/c/${encodeURIComponent(target.threadId)}`
       : `/app/${encodeURIComponent(target.botId)}`;
   }
-  return null;
+  if (!path) return null;
+  if (target.messageId) {
+    const params = new URLSearchParams({ m: target.messageId });
+    return `${path}?${params.toString()}`;
+  }
+  return path;
 }
 
 /**

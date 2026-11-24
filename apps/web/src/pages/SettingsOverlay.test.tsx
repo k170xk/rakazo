@@ -8,11 +8,30 @@ import { expect, it, vi } from "vitest";
 
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({
-    t: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      strings.reduce((text, part, index) => `${text}${values[index - 1] ?? ""}${part}`),
+    t: (parts: TemplateStringsArray, ...values: unknown[]) => String.raw({ raw: parts }, ...values),
     i18n: { locale: "en" },
   }),
+  Trans: ({ children }: { children?: ReactNode }) => children,
 }));
+vi.mock("@lingui/react", () => {
+  type Descriptor = { id?: string; message?: string; values?: Record<string, unknown> };
+  const format = (d: Descriptor | string) =>
+    typeof d === "string"
+      ? d
+      : (d.message ?? d.id ?? "").replace(/\{(\w+)\}/g, (_, key: string) =>
+          String(d.values?.[key] ?? ""),
+        );
+  const i18n = { locale: "en", _: format, t: format };
+  return {
+    useLingui: () => ({
+      i18n,
+      _: format,
+      t: (parts: TemplateStringsArray, ...values: unknown[]) => String.raw({ raw: parts }, ...values),
+    }),
+    Trans: (props: Descriptor & { children?: ReactNode }) => props.children ?? format(props),
+    I18nProvider: ({ children }: { children?: ReactNode }) => children,
+  };
+});
 
 vi.mock("@rakazo/ui-web", () => ({
   Button: ({ children, ...props }: React.ComponentProps<"button">) => (
@@ -55,6 +74,9 @@ vi.mock("../lib/rpc", () => ({
   }),
 }));
 vi.mock("./BillingSettingsPanel", () => ({ BillingSettingsPanel: () => null }));
+vi.mock("./NotificationsSettingsPanel", () => ({
+  NotificationsSettingsPanel: () => null,
+}));
 vi.mock("./OrganizationSettingsPanel", () => ({ OrganizationSettingsPanel: () => null }));
 vi.mock("./PaymentWalletSettingsPanel", () => ({ PaymentWalletSettingsPanel: () => null }));
 vi.mock("./MemorySettingsOverlay", () => ({
@@ -216,6 +238,25 @@ it("reports a section picked in the nav so the shell can keep it in the URL", as
     if (!usage) throw new Error("Missing Usage nav item");
     await act(async () => usage.click());
     expect(onSectionChange).toHaveBeenCalledWith("usage");
+  } finally {
+    await cleanup();
+  }
+});
+
+it("lists Notifications after Approvals and mounts its panel", async () => {
+  const { container, cleanup } = await render({ section: "notifications" });
+  try {
+    const nav = [...container.querySelectorAll("[data-testid^='settings-nav-']")].map((item) =>
+      item.getAttribute("data-testid"),
+    );
+    const approvals = nav.indexOf("settings-nav-confirmations");
+    const notifications = nav.indexOf("settings-nav-notifications");
+    expect(approvals).toBeGreaterThanOrEqual(0);
+    expect(notifications).toBe(approvals + 1);
+    expect(
+      container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section"),
+    ).toBe("notifications");
+    expect(container.querySelector("h2")?.textContent).toBe("Notifications");
   } finally {
     await cleanup();
   }

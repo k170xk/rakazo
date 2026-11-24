@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import {
+  Bell,
   Brain,
   Building2,
   CloudDownload,
@@ -38,6 +39,7 @@ export function useSettingsNavItems(available: {
   return [
     { id: "organization", label: t`Work Space`, icon: Building2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
+    { id: "notifications", label: t`Notifications`, icon: Bell },
     ...(available.vault ? [{ id: "vault" as const, label: t`My vault`, icon: KeyRound }] : []),
     ...(available.email ? [{ id: "email" as const, label: t`Email`, icon: Mail }] : []),
     ...(available.messaging

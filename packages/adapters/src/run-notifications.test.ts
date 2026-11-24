@@ -1,10 +1,28 @@
 import type { NotificationMessage } from "@rakazo/adapter-kit";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExecutorDeps } from "./executor-deps.js";
-import { notifyRun } from "./run-notifications.js";
+import { notifyRun, safeNotificationCopy } from "./run-notifications.js";
 
 vi.mock("./notification-identity.js", () => ({ notificationIdentity: async () => undefined }));
-vi.mock("@rakazo/db", () => ({ countUnreadInboxChats: async () => 2 }));
+
+const upsertNotificationIntent = vi.fn(
+  async (_db?: unknown, _input?: unknown) => ({ id: "intent-1", created: true }),
+);
+const deliverNotificationIntents = vi.fn(async (_deps?: unknown, _input?: unknown) => undefined);
+
+vi.mock("@rakazo/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@rakazo/db")>();
+  return {
+    ...actual,
+    upsertNotificationIntent: (db: unknown, input: unknown) => upsertNotificationIntent(db, input),
+    countUnreadInboxChats: async () => 2,
+  };
+});
+
+vi.mock("./notification-delivery.js", () => ({
+  deliverNotificationIntents: (deps: unknown, input: unknown) =>
+    deliverNotificationIntents(deps, input),
+}));
 
 const run = {
   spaceId: "space-1",
@@ -26,73 +44,167 @@ const message: NotificationMessage = {
 function deps({
   notifyOnFinish = true,
   groupId = null as string | null,
-  publish = vi.fn(async () => undefined),
+  enqueue = vi.fn(async () => undefined),
+  withJobs = true,
 } = {}) {
   const send = vi.fn(async () => undefined);
+  const publish = vi.fn(async () => undefined);
   const value = {
     prisma: {
       routine: { findUnique: async () => null },
       run: {
         findFirst: async () => ({
-          bot: { id: "bot-1", name: "Scout", color: "#000000", avatarSet: "", notifyOnFinish },
+          bot: {
+            id: "bot-1",
+            name: "Scout",
+            color: "#000000",
+            avatarSet: "",
+            notifyOnFinish,
+          },
           thread: { groupId },
         }),
       },
     },
     events: { publishChatAlert: publish },
     notifications: { send },
+    ...(withJobs ? { jobs: { enqueue } } : {}),
   } as unknown as ExecutorDeps;
-  return { value, publish, send };
+  return { value, publish, send, enqueue };
 }
 
-describe("notifyRun chat alerts", () => {
-  it("publishes the alert for open apps alongside the push", async () => {
-    const { value, publish, send } = deps();
-    await notifyRun(value, run, message);
-    expect(publish).toHaveBeenCalledWith("user-1", {
-      kind: "completion",
+describe("safeNotificationCopy", () => {
+  it("keeps lock-screen copy free of question text", () => {
+    expect(safeNotificationCopy("help", "Scout")).toEqual({
+      title: "Scout has a question",
+      body: "Question waiting",
+    });
+    expect(safeNotificationCopy("help", "Scout", { approval: true })).toEqual({
+      title: "Scout needs approval",
+      body: "Approval needed",
+    });
+    expect(safeNotificationCopy("completion", "Scout")).toEqual({
       title: "Scout finished",
-      body: "The report is ready.",
-      spaceId: "space-1",
+      body: "Work completed",
+    });
+    expect(safeNotificationCopy("failure", "Scout")).toEqual({
+      title: "Scout needs attention",
+      body: "Something needs attention",
+    });
+    expect(safeNotificationCopy("takeover", "Scout")).toEqual({
+      title: "Scout needs you",
+      body: "Something needs attention",
+    });
+  });
+});
+
+describe("notifyRun durable intents", () => {
+  beforeEach(() => {
+    upsertNotificationIntent.mockClear();
+    deliverNotificationIntents.mockClear();
+    upsertNotificationIntent.mockResolvedValue({ id: "intent-1", created: true });
+  });
+
+  it("upserts a safe-copy intent and enqueues delivery", async () => {
+    const { value, enqueue, send, publish } = deps();
+    await notifyRun(value, run, message);
+    expect(upsertNotificationIntent).toHaveBeenCalledWith(
+      value.prisma,
+      expect.objectContaining({
+        kind: "completion",
+        category: "updates",
+        title: "Scout finished",
+        body: "Work completed",
+        sourceEventKey: "completion:run-1:-",
+        runId: "run-1",
+      }),
+    );
+    expect(enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "notification.deliver",
+        payload: { intentId: "intent-1" },
+      }),
+    );
+    // Delivery happens on the job path, not inline when enqueue succeeds.
+    expect(send).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+    expect(deliverNotificationIntents).not.toHaveBeenCalled();
+  });
+
+  it("names the group on the intent when the chat is shared", async () => {
+    const { value } = deps({ notifyOnFinish: false, groupId: "group-1" });
+    await notifyRun(value, run, message);
+    expect(upsertNotificationIntent).toHaveBeenCalledWith(
+      value.prisma,
+      expect.objectContaining({ groupId: "group-1" }),
+    );
+  });
+
+  it("creates nothing for a muted updates notice", async () => {
+    const { value, enqueue } = deps({ notifyOnFinish: false });
+    await notifyRun(value, run, message);
+    expect(upsertNotificationIntent).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it("still records help when finish notices are off", async () => {
+    const { value } = deps({ notifyOnFinish: false });
+    await notifyRun(value, run, {
+      kind: "help",
+      title: "Scout needs an answer",
+      body: "What is the password?",
       botId: "bot-1",
       threadId: "thread-1",
+      runId: "run-1",
     });
-    expect(send).toHaveBeenCalledOnce();
+    expect(upsertNotificationIntent).toHaveBeenCalledWith(
+      value.prisma,
+      expect.objectContaining({
+        kind: "help",
+        category: "action_needed",
+        title: "Scout has a question",
+        body: "Question waiting",
+      }),
+    );
   });
 
-  it("names the group an agent's alert came from", async () => {
-    const { value, publish } = deps({ notifyOnFinish: false, groupId: "group-1" });
-    await notifyRun(value, run, message);
-    expect(publish).toHaveBeenCalledWith("user-1", expect.objectContaining({ groupId: "group-1" }));
+  it("detects approval tone from the legacy title", async () => {
+    const { value } = deps({ notifyOnFinish: false });
+    await notifyRun(value, run, {
+      kind: "help",
+      title: "Scout needs approval",
+      body: "Review before shell",
+      botId: "bot-1",
+      threadId: "thread-1",
+      runId: "run-1",
+    });
+    expect(upsertNotificationIntent).toHaveBeenCalledWith(
+      value.prisma,
+      expect.objectContaining({
+        title: "Scout needs approval",
+        body: "Approval needed",
+      }),
+    );
   });
 
-  it("publishes nothing for a muted chat", async () => {
-    const { value, publish, send } = deps({ notifyOnFinish: false });
+  it("falls back to immediate delivery when jobs are missing", async () => {
+    const { value } = deps({ withJobs: false });
     await notifyRun(value, run, message);
-    expect(publish).not.toHaveBeenCalled();
-    expect(send).not.toHaveBeenCalled();
+    expect(deliverNotificationIntents).toHaveBeenCalledWith(
+      expect.objectContaining({ prisma: value.prisma }),
+      { intentId: "intent-1", workerId: "notify-run" },
+    );
   });
 
-  it("never holds up or blocks the push", async () => {
-    const { value, send } = deps({ publish: vi.fn(() => new Promise<undefined>(() => {})) });
+  it("falls back to immediate delivery when enqueue fails", async () => {
+    const { value } = deps({
+      enqueue: vi.fn(async () => {
+        throw new Error("queue down");
+      }),
+    });
     await notifyRun(value, run, message);
-    expect(send).toHaveBeenCalledOnce();
-    const failing = deps({ publish: vi.fn(async () => Promise.reject(new Error("down"))) });
-    await notifyRun(failing.value, run, message);
-    expect(failing.send).toHaveBeenCalledOnce();
-  });
-
-  it("still pushes where open apps have no alert publisher", async () => {
-    const { value, send } = deps();
-    delete (value.events as { publishChatAlert?: unknown }).publishChatAlert;
-    await notifyRun(value, run, message);
-    expect(send).toHaveBeenCalledOnce();
-  });
-
-  it("publishes even where phones have no push provider", async () => {
-    const { value, publish } = deps();
-    delete (value as { notifications?: unknown }).notifications;
-    await notifyRun(value, run, message);
-    expect(publish).toHaveBeenCalledOnce();
+    expect(deliverNotificationIntents).toHaveBeenCalledWith(
+      expect.objectContaining({ jobs: value.jobs }),
+      { intentId: "intent-1", workerId: "notify-run" },
+    );
   });
 });

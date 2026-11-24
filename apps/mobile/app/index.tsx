@@ -90,7 +90,7 @@ import type { OrganizeTarget } from "../lib/organize-target";
 import { findOrganizeTarget } from "../lib/organize-target";
 import { offerPasskeyOnce } from "../lib/passkey";
 import { ACTIVITY_POLL_INTERVAL_MS, INBOX_POLL_INTERVAL_MS } from "../lib/poll-cadence";
-import { registerPushToken } from "../lib/push";
+import { offerPushConsentOnce, syncPushRegistration } from "../lib/push-consent";
 import { forgetReferrals, rememberReferral } from "../lib/referral";
 import { hasSignedInBefore, rememberSignedIn } from "../lib/returning-user";
 import { loadSavedInbox, saveInbox } from "../lib/saved-chats";
@@ -215,6 +215,7 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
       if (!userId) return;
       let active = true;
       void offerPasskeyOnce(userId, () => active);
+      void offerPushConsentOnce(userId, () => active);
       return () => {
         active = false;
       };
@@ -350,9 +351,9 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
   }, []);
 
   useEffect(() => {
-    if (!hasSession || onShareSelect) return;
-    void registerPushToken().catch(() => undefined);
-  }, [hasSession, onShareSelect]);
+    if (!hasSession || onShareSelect || !userId) return;
+    void syncPushRegistration(userId).catch(() => undefined);
+  }, [hasSession, onShareSelect, userId]);
 
   // Show the inbox saved on this device until the first live load replaces it.
   useEffect(() => {

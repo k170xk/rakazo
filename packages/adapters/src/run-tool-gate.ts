@@ -920,6 +920,8 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
         : `Review before ${name}`,
     botId: bot.id,
     threadId: thread.id,
+    runId: run.id,
+    ...(paused.messageId ? { messageId: paused.messageId } : {}),
   });
   return pauseForApproval(ctx);
 }

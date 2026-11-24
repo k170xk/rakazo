@@ -178,6 +178,7 @@ import {
   MoveTodoItemInput,
   MyMetersSchema,
   MyStorageStateSchema,
+  NotificationPreferencesSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   PluginMarketplaceCatalogSchema,
   PluginPartSchema,
@@ -223,6 +224,7 @@ import {
   UpdateBotInput,
   UpdateExternalConversationPolicyInput,
   UpdateGroupInput,
+  UpdateNotificationPreferencesInput,
   UpdateTodoItemInput,
   UsageRecordSchema,
   UsageSummarySchema,
@@ -2353,6 +2355,11 @@ export const appContract = {
         }),
       ),
     ),
+    /** Channel and category choices for the signed-in user in the current space. */
+    preferences: oc.output(NotificationPreferencesSchema),
+    updatePreferences: oc
+      .input(UpdateNotificationPreferencesInput)
+      .output(NotificationPreferencesSchema),
     subscribeCalls: oc.output(
       eventIterator(
         z.object({

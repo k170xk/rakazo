@@ -811,6 +811,8 @@ export interface BackgroundJobPayloads {
   /** Reconcile durable remote-agent intent; scope is loaded from the database. */
   "cloud_agent.poll": { agentId: string };
   "purchase.poll": { purchaseId: string };
+  /** Deliver a durable notification intent, or drain due intents when unset. */
+  "notification.deliver": { intentId?: string };
   /** Read an Expo push receipt; the token is identified by its digest, never stored. */
   "push.receipt": { userId: string; ticketId: string; tokenDigest: string };
 }
@@ -871,16 +873,22 @@ export interface ArtifactPut {
   bytes: Uint8Array;
 }
 
+export type NotificationCategory = "action_needed" | "updates" | "problems";
+
 export interface NotificationMessage {
   /** Verified sender metadata. Avatar is a bounded JPEG thumbnail, base64 encoded. */
   sender?: { botId: string; name: string; avatar?: string };
   kind: "completion" | "failure" | "help" | "takeover";
+  /** Preference category for this alert. Absent on older senders that only set kind. */
+  category?: NotificationCategory;
   title: string;
   body: string;
   botId: string;
   threadId: string;
   /** The finished run, so a device that also polls for finished work does not alert twice. */
   runId?: string;
+  /** Chat message a tap should open, when the sender knows it. */
+  messageId?: string;
   /** Group chat that owns threadId, so a tap does not open the bot's direct thread. */
   groupId?: string;
   /** Unread chats to show on the app icon, when the sender knows them. */

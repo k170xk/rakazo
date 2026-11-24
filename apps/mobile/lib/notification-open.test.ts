@@ -90,6 +90,43 @@ describe("notification tap routing", () => {
     });
   });
 
+  it("passes message, run and category so the thread can focus the ask or reply", () => {
+    expect(
+      notificationOpenTarget({
+        botId: "bot-1",
+        threadId: "thread-9",
+        messageId: "msg-3",
+        runId: "run-2",
+        category: "action_needed",
+      }),
+    ).toEqual({
+      pathname: "/thread",
+      params: {
+        botId: "bot-1",
+        threadId: "thread-9",
+        messageId: "msg-3",
+        runId: "run-2",
+        category: "action_needed",
+      },
+    });
+    expect(
+      notificationOpenTarget({
+        "rakazo.groupId": "group-1",
+        "rakazo.messageId": "msg-4",
+        "rakazo.runId": "run-4",
+        "rakazo.category": "updates",
+      }),
+    ).toEqual({
+      pathname: "/group-thread",
+      params: {
+        groupId: "group-1",
+        messageId: "msg-4",
+        runId: "run-4",
+        category: "updates",
+      },
+    });
+  });
+
   it("opens the thread named by an Android deep link, including its thread id", () => {
     expect(
       notificationOpenTargetFromLink(

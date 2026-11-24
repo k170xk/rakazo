@@ -30,6 +30,7 @@ const payloadSchemas = {
   }),
   "cloud_agent.poll": z.object({ agentId: z.string().min(1) }),
   "purchase.poll": z.object({ purchaseId: z.string().min(1) }),
+  "notification.deliver": z.object({ intentId: z.string().min(1).optional() }),
   "push.receipt": z.object({
     userId: z.string().min(1),
     ticketId: z.string().min(1),
@@ -165,6 +166,15 @@ export function messagingDeliverJob(runId?: string, availableAt?: Date): Backgro
     name: "messaging.deliver",
     payload: runId ? { runId } : {},
     replaceKey: `messaging.deliver:${runId ?? "drain"}`,
+    ...(availableAt ? { availableAt } : {}),
+  };
+}
+
+export function notificationDeliverJob(intentId?: string, availableAt?: Date): BackgroundJob {
+  return {
+    name: "notification.deliver",
+    payload: intentId ? { intentId } : {},
+    replaceKey: `notification.deliver:${intentId ?? "drain"}`,
     ...(availableAt ? { availableAt } : {}),
   };
 }

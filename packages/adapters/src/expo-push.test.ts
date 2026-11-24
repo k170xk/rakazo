@@ -148,24 +148,30 @@ describe("expo push", () => {
     expect(secondBody.data.deliveryId).not.toBe(body.data.deliveryId);
   });
 
-  it("puts the space and group on the payload a tap opens", () => {
+  it("puts the space, group, category and message on the payload a tap opens", () => {
     expect(
       expoPushData(
         {
-          kind: "completion",
+          kind: "help",
+          category: "action_needed",
           title: "done",
           body: "ok",
           botId: "bot-1",
           threadId: "thread-1",
           groupId: "group-1",
+          runId: "run-1",
+          messageId: "msg-1",
         },
         "space-1",
         "delivery-1",
       ),
     ).toEqual({
-      kind: "completion",
+      kind: "help",
+      category: "action_needed",
       botId: "bot-1",
       threadId: "thread-1",
+      runId: "run-1",
+      messageId: "msg-1",
       spaceId: "space-1",
       groupId: "group-1",
       deliveryId: "delivery-1",

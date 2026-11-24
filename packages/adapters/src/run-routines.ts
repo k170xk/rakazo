@@ -97,7 +97,7 @@ export async function scheduleRoutineRetry(
 
 async function notifyFailedRoutineRun(
   deps: ExecutorDeps,
-  failed: Parameters<typeof notifyRun>[1] & { error: string | null },
+  failed: Parameters<typeof notifyRun>[1] & { id: string; error: string | null },
   options: { retryOnFailure?: boolean } = {},
 ) {
   const bot = await deps.prisma.bot.findUniqueOrThrow({
@@ -113,6 +113,7 @@ async function notifyFailedRoutineRun(
       body: failed.error ?? "",
       botId: failed.botId,
       threadId: failed.threadId,
+      runId: failed.id,
     },
     options,
   );
@@ -189,6 +190,8 @@ async function deferPastDailyLimit(
         body: dailyLimitNotice(held.limit, deferTo, routine.timezone),
         botId: routine.botId,
         threadId,
+        // No run exists yet; key the intent to the routine so one hold alerts once.
+        runId: `routine-limit:${routine.id}`,
       },
     ).catch((error) => getLogger().error("routine daily limit notice", error));
   }

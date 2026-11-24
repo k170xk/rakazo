@@ -28,7 +28,7 @@ import { SubscriptionGate } from "./components/SubscriptionGate";
 import { authClient } from "./lib/auth";
 import { getTicketBoardEnabled, subscribeTicketBoardEnabled } from "./lib/bootstrap";
 import { syncCallIdentity } from "./lib/call-session";
-import { syncNativePushUser } from "./lib/capacitor-push";
+import { nativePushPermissionState, syncNativePushUser } from "./lib/capacitor-push";
 import { desktopBridge } from "./lib/desktop";
 import { syncWebLogoAvatarIdentity } from "./lib/logo-avatar-activity";
 import { identifyMonitoringUser } from "./lib/monitoring";
@@ -224,7 +224,15 @@ function SessionApp() {
   }, [gate, analyticsUserId]);
   useEffect(() => {
     if (gate === "loading") return;
-    void syncNativePushUser(gate === "authenticated" ? analyticsUserId : null);
+    if (gate !== "authenticated" || !analyticsUserId) {
+      void syncNativePushUser(null);
+      return;
+    }
+    // Bind the native push identity only after OS permission is granted, so first
+    // launch stays consent-first. Users who already enabled keep syncing as before.
+    void nativePushPermissionState()
+      .then((permission) => syncNativePushUser(permission === "granted" ? analyticsUserId : null))
+      .catch(() => undefined);
   }, [gate, analyticsUserId]);
   const [holdingUnreachable, setHoldingUnreachable] = useState(false);
   const nextHolding = holdUnreachableGate(gate, holdingUnreachable);

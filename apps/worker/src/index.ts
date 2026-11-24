@@ -521,7 +521,8 @@ async function main() {
     messaging,
     cloudAgent,
     paymentWallet,
-    notifications: expoPushFrom(notifications),
+    notifications,
+    expoNotifications: expoPushFrom(notifications),
   });
   const reconciler = createJobReconciler({
     prisma,

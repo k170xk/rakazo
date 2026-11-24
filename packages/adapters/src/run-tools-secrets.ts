@@ -391,6 +391,8 @@ export const secretTools: ToolHandlers = {
       ...secretAskNotification(displayName(bot.name, "Agent"), askText, ctx.secrets),
       botId: bot.id,
       threadId: thread.id,
+      runId: run.id,
+      ...(paused.messageId ? { messageId: paused.messageId } : {}),
     });
     return pauseForSecret(ctx);
   },

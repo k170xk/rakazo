@@ -110,6 +110,7 @@ export async function failRunBeforeTurn(
       body: message,
       botId: run.botId,
       threadId: run.threadId,
+      runId: run.id,
     });
   }
   return true;

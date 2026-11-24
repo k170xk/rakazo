@@ -216,6 +216,8 @@ export async function openUserSettings(
     | "models"
     | "memory"
     | "voice"
+    | "confirmations"
+    | "notifications"
     | "vault"
     | "wallet"
     | "usage"

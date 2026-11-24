@@ -7,17 +7,31 @@ import { Platform } from "react-native";
 import { rpc } from "./api";
 import { currentSessionGeneration } from "./session";
 
-async function notificationsAllowed() {
+export type RegisterPushOptions = {
+  /**
+   * When true, may show the OS permission prompt. Default false so registration
+   * never prompts until the user consents in the first-run dialogue or settings.
+   */
+  requestPermission?: boolean;
+};
+
+async function notificationsAllowed(allowRequest: boolean) {
   // On iOS getPermissionsAsync holds Expo's shared native queue until the system answers,
-  // which can take minutes after a restart, and SecureStore waits behind it. The request
-  // does not hold the queue and only prompts while the user hasn't chosen yet.
-  if (Platform.OS === "ios") return (await Notifications.requestPermissionsAsync()).granted;
+  // which can take minutes after a restart, and SecureStore waits behind it. Avoid it on the
+  // hot path: only requestPermissionsAsync (which does not hold the queue the same way) when
+  // the user has consented, otherwise skip.
+  if (Platform.OS === "ios") {
+    if (!allowRequest) return false;
+    return (await Notifications.requestPermissionsAsync()).granted;
+  }
   const existing = await Notifications.getPermissionsAsync();
-  return existing.granted || (await Notifications.requestPermissionsAsync()).granted;
+  if (existing.granted) return true;
+  if (!allowRequest) return false;
+  return (await Notifications.requestPermissionsAsync()).granted;
 }
 
-export async function registerPushToken() {
-  if (!(await notificationsAllowed())) return;
+export async function registerPushToken(options: RegisterPushOptions = {}) {
+  if (!(await notificationsAllowed(options.requestPermission === true))) return;
   try {
     const projectId = Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
     if (!projectId) return;

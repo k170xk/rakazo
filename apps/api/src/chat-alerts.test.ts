@@ -1,5 +1,5 @@
 import { createRouterClient } from "@orpc/server";
-import type { Actor, ChatAlert } from "@rakazo/contracts";
+import type { Actor, ChatAlert, NotificationPreferences } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
@@ -19,6 +19,30 @@ const alert: ChatAlert = {
   botId: "bot-1",
   threadId: "thread-1",
 };
+
+const preferenceDefaults: NotificationPreferences = {
+  inApp: true,
+  push: true,
+  actionNeeded: true,
+  updates: true,
+  problems: true,
+};
+
+function preferencePrisma(
+  overrides: Partial<{
+    findUnique: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  }> = {},
+) {
+  return {
+    notificationPreference: {
+      findUnique: overrides.findUnique ?? vi.fn(async () => preferenceDefaults),
+      create: overrides.create ?? vi.fn(async () => preferenceDefaults),
+      update: overrides.update ?? vi.fn(async () => preferenceDefaults),
+    },
+  };
+}
 
 describe("notifications.subscribe", () => {
   it("streams the user's alerts for this space only", async () => {
@@ -49,6 +73,64 @@ describe("notifications.subscribe", () => {
       context: { actor: null },
     });
     await expect(client.notifications.subscribe()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+});
+
+describe("notifications.preferences", () => {
+  it("returns the signed-in user's preferences for the current space", async () => {
+    const findUnique = vi.fn(async () => preferenceDefaults);
+    const client = createRouterClient(
+      createRouter({ prisma: preferencePrisma({ findUnique }) } as unknown as RouterDeps),
+      { context: { actor } },
+    );
+    await expect(client.notifications.preferences()).resolves.toEqual(preferenceDefaults);
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { spaceId_userId: { spaceId: actor.spaceId, userId: actor.userId } },
+      select: {
+        inApp: true,
+        push: true,
+        actionNeeded: true,
+        updates: true,
+        problems: true,
+      },
+    });
+  });
+
+  it("updates only the current user's preferences in the current space", async () => {
+    const findUnique = vi.fn(async () => preferenceDefaults);
+    const update = vi.fn(async () => ({ ...preferenceDefaults, problems: false }));
+    const client = createRouterClient(
+      createRouter({ prisma: preferencePrisma({ findUnique, update }) } as unknown as RouterDeps),
+      { context: { actor } },
+    );
+    await expect(client.notifications.updatePreferences({ problems: false })).resolves.toEqual({
+      ...preferenceDefaults,
+      problems: false,
+    });
+    expect(update).toHaveBeenCalledWith({
+      where: { spaceId_userId: { spaceId: actor.spaceId, userId: actor.userId } },
+      data: { problems: false },
+      select: {
+        inApp: true,
+        push: true,
+        actionNeeded: true,
+        updates: true,
+        problems: true,
+      },
+    });
+  });
+
+  it("requires a signed-in user", async () => {
+    const client = createRouterClient(
+      createRouter({ prisma: preferencePrisma() } as unknown as RouterDeps),
+      { context: { actor: null } },
+    );
+    await expect(client.notifications.preferences()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+    await expect(client.notifications.updatePreferences({ push: false })).rejects.toMatchObject({
       code: "UNAUTHORIZED",
     });
   });

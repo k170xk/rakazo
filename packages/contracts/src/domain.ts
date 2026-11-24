@@ -186,17 +186,38 @@ export const IncomingBotCallSchema = BotSchema.pick({
 });
 export type IncomingBotCall = z.infer<typeof IncomingBotCallSchema>;
 
+/** Preference buckets that group the older per-kind mute switches. */
+export const NotificationCategorySchema = z.enum(["action_needed", "updates", "problems"]);
+export type NotificationCategory = z.infer<typeof NotificationCategorySchema>;
+
 /** A run alert the server also pushes to phones, already filtered by the chat's mute settings. */
 export const ChatAlertSchema = z.object({
   kind: z.enum(["completion", "failure", "help", "takeover"]),
+  category: NotificationCategorySchema.optional(),
   title: z.string(),
   body: z.string(),
   spaceId: Id,
   botId: Id,
   threadId: Id,
   groupId: Id.optional(),
+  runId: Id.optional(),
+  messageId: Id.optional(),
+  deliveryId: Id.optional(),
 });
 export type ChatAlert = z.infer<typeof ChatAlertSchema>;
+
+/** Per-space channel and category choices for the signed-in user. */
+export const NotificationPreferencesSchema = z.object({
+  inApp: z.boolean(),
+  push: z.boolean(),
+  actionNeeded: z.boolean(),
+  updates: z.boolean(),
+  problems: z.boolean(),
+});
+export type NotificationPreferences = z.infer<typeof NotificationPreferencesSchema>;
+
+export const UpdateNotificationPreferencesInput = NotificationPreferencesSchema.partial();
+export type UpdateNotificationPreferencesInput = z.infer<typeof UpdateNotificationPreferencesInput>;
 
 export const ReorderBotsInput = z.object({
   botIds: z

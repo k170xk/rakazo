@@ -6,6 +6,7 @@ import type {
   BackgroundJobHandlers,
   JobPublisher,
   MessagingSurface,
+  NotificationProvider,
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
@@ -30,6 +31,7 @@ import type { ExpoPushProvider } from "./expo-push.js";
 import { compactHistory } from "./history-compaction.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import { deliverMessagingOutbound, mirrorMessagingOutbound } from "./messaging-delivery.js";
+import { deliverNotificationIntents } from "./notification-delivery.js";
 import { pollPurchase } from "./purchase-poll.js";
 import { expireTaughtSkillTeaching } from "./teaching-session.js";
 
@@ -73,7 +75,10 @@ export function createBackgroundJobHandlers(deps: {
   messaging?: MessagingSurface;
   cloudAgent?: CloudAgentConnection | null;
   paymentWallet?: PaymentWalletProvider | null;
-  notifications?: ExpoPushProvider;
+  /** Full push fan-out for durable notification delivery (Expo, native shell, …). */
+  notifications?: NotificationProvider;
+  /** Expo-only receipt checks; omit when receipts are not configured. */
+  expoNotifications?: ExpoPushProvider;
 }): BackgroundJobHandlers {
   const messagingDeps = deps.messaging
     ? {
@@ -98,6 +103,19 @@ export function createBackgroundJobHandlers(deps: {
           userId: "",
           signal: new AbortController().signal,
         },
+      ),
+    );
+  };
+  const drainNotifications = async (intentId?: string) => {
+    await runAsSystem("drain the notification outbox across Spaces", () =>
+      deliverNotificationIntents(
+        {
+          prisma: deps.prisma,
+          events: deps.events,
+          ...(deps.notifications ? { notifications: deps.notifications } : {}),
+          jobs: deps.jobs,
+        },
+        { workerId: deps.workerId, ...(intentId ? { intentId } : {}) },
       ),
     );
   };
@@ -156,6 +174,9 @@ export function createBackgroundJobHandlers(deps: {
         await asOwner(run, () => mirrorMessagingOutbound(messagingDeps, runId))({ runId });
       }
       await drainMessaging();
+    },
+    "notification.deliver": async ({ intentId }) => {
+      await drainNotifications(intentId);
     },
     "routine.wakeup": asOwner(routine, async (payload) => {
       await deps.executor.wakeRoutine(payload.routineId, payload.scheduledFor);
@@ -216,7 +237,9 @@ export function createBackgroundJobHandlers(deps: {
     }),
     // A receipt belongs to a device's push token, not to a Space.
     "push.receipt": async (payload) => {
-      await runAsSystem("check a push receipt", () => deps.notifications?.checkReceipt(payload));
+      await runAsSystem("check a push receipt", () =>
+        deps.expoNotifications?.checkReceipt(payload),
+      );
     },
     "history.compact": asOwner(thread, async (payload) => {
       // Retrieval policies use stored context without paid message-count compaction.

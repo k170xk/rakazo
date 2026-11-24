@@ -788,7 +788,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     // Every API container runs node as the same pid, and deploys run old and new side by side.
     workerId: `${hostname()}:${process.pid}`,
     runtime,
-    notifications: expoPushFrom(notifications),
+    notifications,
+    expoNotifications: expoPushFrom(notifications),
     secretStore: secrets,
     memoryProviders,
     deploymentModelKey: env.deploymentModelKey,

@@ -182,6 +182,8 @@ export interface ClaimedSteeringMessage {
 
 export interface FinalizeRunResult {
   continuationRunId: string | null;
+  /** Bot message created when a run pauses for input, for exact notification deep links. */
+  messageId?: string;
 }
 
 interface FinalizeRunBase {
@@ -1434,6 +1436,7 @@ export async function pauseRunForInput(
       threadId: waitingEvent.threadId,
       seq: waitingEvent.seq,
       continuationRunId,
+      messageId: message.id,
       firstResponseRunId: response.firstResponse ? input.runId : undefined,
     };
   });
@@ -1446,7 +1449,10 @@ export async function pauseRunForInput(
     committed.seq,
     committed.firstResponseRunId,
   );
-  return { continuationRunId: committed.continuationRunId };
+  return {
+    continuationRunId: committed.continuationRunId,
+    messageId: committed.messageId,
+  };
 }
 
 export async function pauseRunForTakeover(

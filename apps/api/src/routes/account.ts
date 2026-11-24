@@ -22,6 +22,7 @@ import {
   findDefaultVoiceCredential,
   findModelCredential,
   findModelCredentialById,
+  getOrCreateNotificationPreferences,
   listApprovalRules,
   listAuditEvents,
   listVoicePreferences,
@@ -34,6 +35,7 @@ import {
   saveApprovalRule,
   saveAutoReviewPreference,
   selectVoicePreference,
+  updateNotificationPreferences,
   voicePreferenceTarget,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -542,6 +544,20 @@ export function accountRoutes(ctx: RouterContext) {
       ),
     },
     notifications: {
+      preferences: authed.notifications.preferences.handler(async ({ context }) =>
+        getOrCreateNotificationPreferences(deps.prisma, {
+          spaceId: context.actor.spaceId,
+          userId: context.actor.userId,
+        }),
+      ),
+      updatePreferences: authed.notifications.updatePreferences.handler(
+        async ({ context, input }) =>
+          updateNotificationPreferences(
+            deps.prisma,
+            { spaceId: context.actor.spaceId, userId: context.actor.userId },
+            input,
+          ),
+      ),
       subscribe: authed.notifications.subscribe.handler(async function* ({ context }) {
         if (!deps.events.followChatAlerts) throw new ORPCError("NOT_FOUND");
         const { spaceId, userId } = context.actor;

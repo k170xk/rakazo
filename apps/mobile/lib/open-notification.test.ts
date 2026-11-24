@@ -70,6 +70,34 @@ describe("opening a notification tap", () => {
     expect(Notifications.clearLastNotificationResponse).not.toHaveBeenCalled();
   });
 
+  it("opens the thread with the message id so the chat can scroll to it", async () => {
+    vi.mocked(loadSessionToken).mockResolvedValue("token");
+    await expect(
+      openNotificationResponse(
+        tap("tap-message", {
+          botId: "bot-1",
+          threadId: "thread-1",
+          messageId: "msg-9",
+          runId: "run-3",
+          category: "action_needed",
+        }),
+      ),
+    ).resolves.toBe(true);
+    expect(router.push).toHaveBeenCalledWith(
+      {
+        pathname: "/thread",
+        params: {
+          botId: "bot-1",
+          threadId: "thread-1",
+          messageId: "msg-9",
+          runId: "run-3",
+          category: "action_needed",
+        },
+      },
+      { dangerouslySingular: threadRouteId },
+    );
+  });
+
   it("drops a signed-out tap so a later cold start cannot replay it", async () => {
     vi.mocked(loadSessionToken).mockResolvedValue("");
     const response = tap("tap-signed-out", {

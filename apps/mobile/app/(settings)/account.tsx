@@ -1,14 +1,12 @@
 import { MenuView } from "@expo/ui/community/menu";
 import type { AccountSecurity, UsageSummary } from "@rakazo/contracts";
 import { accountDisplay, displayName } from "@rakazo/core";
-import * as Notifications from "expo-notifications";
 import type { Href } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
   Alert,
-  AppState,
   Platform,
   ScrollView,
   StyleSheet,
@@ -32,12 +30,9 @@ import {
 import { createAccountNameEditor } from "../../lib/account-name-editor";
 import type { MobileMe } from "../../lib/api";
 import {
-  currentApiBase,
   fetchAccountSecurity,
-  loadSessionToken,
   passwordResetCapabilities,
   rpc,
-  selectedSpaceId,
   signOut,
   updateAccountName,
 } from "../../lib/api";
@@ -51,16 +46,6 @@ import { useApprovalSettings } from "../../lib/approval-settings";
 import { archivedChatCounts, loadArchivedChats } from "../../lib/archived-chats";
 import { replaceWithSignIn } from "../../lib/auth-routing";
 import { dateLocaleForUi, useI18n } from "../../lib/i18n";
-import type { LiveNotificationSettings } from "../../lib/live-notifications";
-import {
-  canPostPromotedNotifications,
-  DEFAULT_LIVE_NOTIFICATION_SETTINGS,
-  getLiveNotificationSettings,
-  hasLiveUpdateSettings,
-  openLiveNotificationSettings,
-  openPromotedNotificationSettings,
-  setLiveNotificationSettings,
-} from "../../lib/live-notifications";
 import { native, useResolvedAppearance, useThemedStyles } from "../../lib/native";
 import { activeOrganization, useOrganizations } from "../../lib/organizations";
 import type { MobilePasskey } from "../../lib/passkey";
@@ -71,8 +56,6 @@ import {
   passkeysAvailable,
   renamePasskey,
 } from "../../lib/passkey";
-import { registerPushToken } from "../../lib/push";
-import { createQueuedSave } from "../../lib/queued-save";
 import {
   getCachedRemoteImagesEnabled,
   setRemoteImagesPreference,
@@ -136,15 +119,6 @@ export default function Account() {
   const { run: securityAction } = deletion;
   const [signingOut, setSigningOut] = useState(false);
   const pending = deletion.pending || signingOut;
-  const [notifications, setNotifications] = useState<LiveNotificationSettings>(
-    DEFAULT_LIVE_NOTIFICATION_SETTINGS,
-  );
-  const [notificationsReady, setNotificationsReady] = useState(Platform.OS !== "android");
-  const notificationQueue = useRef<ReturnType<
-    typeof createQueuedSave<LiveNotificationSettings>
-  > | null>(null);
-  const [notificationPermission, setNotificationPermission] = useState<string | null>(null);
-  const [notificationError, setNotificationError] = useState<string | null>(null);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [passkeys, setPasskeys] = useState<MobilePasskey[] | null>(null);
   const [passkeyPending, setPasskeyPending] = useState(false);
@@ -209,12 +183,6 @@ export default function Account() {
     void rpc("usage/summary")
       .then(setUsage)
       .catch(() => undefined);
-    if (Platform.OS === "android") {
-      void getLiveNotificationSettings()
-        .then(setNotifications)
-        .catch(() => undefined)
-        .finally(() => setNotificationsReady(true));
-    }
   }, []);
 
   const count = new Intl.NumberFormat(dateLocaleForUi(locale));
@@ -284,30 +252,6 @@ export default function Account() {
     }, []),
   );
 
-  // Granting notifications in system settings leaves this screen mounted, so the
-  // row would keep saying blocked until the app comes back to the foreground.
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS !== "android") return;
-      let active = true;
-      const read = () => {
-        void Notifications.getPermissionsAsync()
-          .then((permission) => {
-            if (active) setNotificationPermission(permission.status);
-          })
-          .catch(() => undefined);
-      };
-      read();
-      const subscription = AppState.addEventListener("change", (state) => {
-        if (state === "active") read();
-      });
-      return () => {
-        active = false;
-        subscription.remove();
-      };
-    }, []),
-  );
-
   async function handleSignOut() {
     setSigningOut(true);
     setSignOutError(null);
@@ -318,35 +262,6 @@ export default function Account() {
       setSignOutError(errorText(err, t("Could not sign out")));
       setSigningOut(false);
     }
-  }
-
-  function updateNotifications(next: LiveNotificationSettings) {
-    notificationQueue.current ??= createQueuedSave(notifications, {
-      onChange: setNotifications,
-      equals: (a, b) =>
-        a.liveConnection === b.liveConnection &&
-        a.messages === b.messages &&
-        a.scheduledTasks === b.scheduledTasks &&
-        a.needsAttention === b.needsAttention,
-      save: async (settings) => {
-        await setLiveNotificationSettings(
-          settings,
-          currentApiBase(),
-          await loadSessionToken(),
-          selectedSpaceId() ?? "",
-        );
-      },
-      onSaved: async (settings) => {
-        if (settings.liveConnection && !(await canPostPromotedNotifications())) {
-          await openPromotedNotificationSettings();
-        }
-        await registerPushToken();
-      },
-      onError: (cause) =>
-        setNotificationError(errorText(cause, t("Could not update notifications"))),
-    });
-    setNotificationError(null);
-    notificationQueue.current.update(next);
   }
 
   useEffect(() => {
@@ -612,65 +527,13 @@ export default function Account() {
             title={t("Language")}
             value={UI_LOCALE_LABELS[locale]}
           />
+          <SettingsRow
+            accessibilityRole="button"
+            chevron="right"
+            onPress={() => router.push("/notifications")}
+            title={t("Notifications")}
+          />
         </SettingsGroup>
-
-        {Platform.OS === "android" ? (
-          <SettingsGroup accessibilityLabel={t("Notifications")} label={t("Notifications")}>
-            {notificationPermission === "denied" ? (
-              <SettingsRow
-                accessibilityRole="button"
-                detail={t("Android blocked notifications.")}
-                onPress={() => void openLiveNotificationSettings()}
-                title={t("Notifications")}
-              />
-            ) : null}
-            <SettingsSwitch
-              label={t("Live working status")}
-              value={notifications.liveConnection}
-              disabled={!notificationsReady}
-              onChange={(liveConnection) =>
-                void updateNotifications({ ...notifications, liveConnection })
-              }
-            />
-            <SettingsSwitch
-              label={t("Agent messages")}
-              detail={t("Replies and completed work")}
-              value={notifications.messages}
-              disabled={!notificationsReady}
-              onChange={(messages) => void updateNotifications({ ...notifications, messages })}
-            />
-            <SettingsSwitch
-              label={t("Scheduled tasks")}
-              value={notifications.scheduledTasks}
-              disabled={!notificationsReady}
-              onChange={(scheduledTasks) =>
-                void updateNotifications({ ...notifications, scheduledTasks })
-              }
-            />
-            <SettingsSwitch
-              label={t("Needs attention")}
-              detail={t("Questions, approvals, takeover")}
-              value={notifications.needsAttention}
-              disabled={!notificationsReady}
-              onChange={(needsAttention) =>
-                void updateNotifications({ ...notifications, needsAttention })
-              }
-            />
-            {hasLiveUpdateSettings() ? (
-              <SettingsRow
-                accessibilityRole="button"
-                onPress={() => void openPromotedNotificationSettings()}
-                title={t("Live update settings")}
-              />
-            ) : null}
-            <SettingsRow
-              accessibilityRole="button"
-              onPress={() => void openLiveNotificationSettings()}
-              title={t("Notification settings")}
-            />
-            {notificationError ? <Text style={styles.error}>{notificationError}</Text> : null}
-          </SettingsGroup>
-        ) : null}
 
         <SettingsGroup>
           {me?.billingEnabled ? (

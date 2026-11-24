@@ -1,11 +1,20 @@
+export type NotificationRouteParams = {
+  threadId?: string;
+  spaceId?: string;
+  name?: string;
+  messageId?: string;
+  runId?: string;
+  category?: string;
+};
+
 export type NotificationRoute =
   | {
       pathname: "/thread";
-      params: { botId: string; threadId?: string; spaceId?: string; name?: string };
+      params: { botId: string } & NotificationRouteParams;
     }
   | {
       pathname: "/group-thread";
-      params: { groupId: string; threadId?: string; spaceId?: string; name?: string };
+      params: { groupId: string } & NotificationRouteParams;
     };
 
 export type ThreadSpaceRequest =
@@ -44,10 +53,16 @@ export function notificationOpenTarget(data: unknown): NotificationRoute | null 
   const threadId = notificationField(record, "threadId");
   const spaceId = notificationField(record, "spaceId");
   const name = notificationField(record, "name");
-  const shared = {
+  const messageId = notificationField(record, "messageId");
+  const runId = notificationField(record, "runId");
+  const category = notificationField(record, "category");
+  const shared: NotificationRouteParams = {
     ...(threadId ? { threadId } : {}),
     ...(spaceId ? { spaceId } : {}),
     ...(name ? { name } : {}),
+    ...(messageId ? { messageId } : {}),
+    ...(runId ? { runId } : {}),
+    ...(category ? { category } : {}),
   };
   const groupId = notificationField(record, "groupId");
   if (groupId) return { pathname: "/group-thread", params: { groupId, ...shared } };
