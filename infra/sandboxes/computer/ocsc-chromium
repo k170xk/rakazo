@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+# Google Chrome hangs on --remote-debugging-pipe when libnss_wrapper.so is
+# preloaded by the container environment. Strip only that entry before exec.
+if [ -n "${LD_PRELOAD:-}" ]; then
+  _kept=""
+  _rest="$LD_PRELOAD"
+  while [ -n "$_rest" ]; do
+    case "$_rest" in
+      *[:\ ]*) _entry="${_rest%%[: ]*}"; _rest="${_rest#*[: ]}" ;;
+      *) _entry="$_rest"; _rest="" ;;
+    esac
+    case "$_entry" in
+      *libnss_wrapper.so|"") ;;
+      *) _kept="${_kept:+$_kept:}$_entry" ;;
+    esac
+  done
+  if [ -n "$_kept" ]; then export LD_PRELOAD="$_kept"; else unset LD_PRELOAD; fi
+  unset _kept _rest _entry
+fi
+for candidate in /usr/bin/google-chrome-stable /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+  if [ -x "$candidate" ]; then
+    exec "$candidate" "$@"
+  fi
+done
+echo "no chrome/chromium binary found" >&2
+exit 1

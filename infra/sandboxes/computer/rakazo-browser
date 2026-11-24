@@ -438,6 +438,7 @@ if [ -n "${LD_PRELOAD:-}" ]; then
   unset _kept _rest _entry
 fi
 
+export LANGUAGE="${LANGUAGE:-en_GB:en}"
 # This container has no GPU. --disable-gpu keeps Chromium from probing one.
 # WebGL still needs SwiftShader: --disable-software-rasterizer blocks it, and
 # current Chromium allows that fallback only with --enable-unsafe-swiftshader.
