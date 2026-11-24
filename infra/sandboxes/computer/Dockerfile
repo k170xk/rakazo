@@ -210,7 +210,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && uv pip install --system --break-system-packages --no-cache \
       "numpy<2" python-docx python-pptx pypdf pdfplumber xlrd beautifulsoup4 \
       pymupdf reportlab pytesseract ezdxf extract-msg pillow-heif \
-  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, pymupdf, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, pandas, openpyxl, matplotlib, PIL, numpy, scipy; print("ocsc-python libs ok")'
+  && HOME=/tmp MPLCONFIGDIR=/tmp/mpl-check XDG_CACHE_HOME=/tmp/xdg-check \
+      python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, pymupdf, reportlab, pytesseract, ezdxf, extract_msg, pillow_heif, pandas, openpyxl, matplotlib, PIL, numpy, scipy; print("ocsc-python libs ok")' \
+  && rm -rf /tmp/mpl-check /tmp/xdg-check /tmp/uv-*.lock
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
@@ -232,7 +234,9 @@ RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool /opt/ocsc-extract/ocsc-extr
         /opt/ocsc-video/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-*-normal.woff2 \
         /usr/local/share/fonts/ocsc/ \
   && (fc-cache -f /usr/local/share/fonts/ocsc || true) \
-  && node --version && npm --version
+  && node --version && npm --version \
+  && chown -R 1000:1000 /home/rakazo \
+  && rm -rf /tmp/node-compile-cache /tmp/uv-*.lock
 ENV OCSC_PLAYWRIGHT_MODULE=/opt/ocsc-word/node_modules/playwright-core/index.mjs \
     OCSC_CHROMIUM=/usr/bin/chromium \
     OCSC_SCREEN_OPEN=/usr/local/bin/rakazo-browser
