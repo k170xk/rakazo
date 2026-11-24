@@ -30,9 +30,58 @@ export type RunWorkspace = {
   markDirty: () => void;
   context: AdapterContext;
   runSecrets: string[];
+  /** Whether the active model accepts inline image blocks in tool results. */
+  acceptsImages?: boolean;
 };
 
 const MAX_MODEL_FILE_BYTES = 250_000;
+const MAX_MODEL_IMAGE_BYTES = 4_000_000;
+
+function detectImageMimeType(bytes: Uint8Array): "image/png" | "image/jpeg" | "image/webp" | "image/gif" | null {
+  if (
+    bytes.byteLength >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+  if (bytes.byteLength >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (
+    bytes.byteLength >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  if (
+    bytes.byteLength >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+    bytes[5] === 0x61
+  ) {
+    return "image/gif";
+  }
+  return null;
+}
+
+const IMAGE_PATH_EXT = /\.(png|jpe?g|webp|gif)$/i;
 
 function runFileWorkspace(workspace: RunWorkspace) {
   return { mode: workspace.computerMode, botId: workspace.botId, folder: workspace.folder };
@@ -81,10 +130,12 @@ export async function readFileFromTool(
   const { computer, context, runSecrets } = workspace;
   const filePath = String(args.path ?? "");
   const storedPath = resolveRunFilePath(runFileWorkspace(workspace), filePath);
+  const looksLikeImage = IMAGE_PATH_EXT.test(filePath);
+  const byteLimit = looksLikeImage ? MAX_MODEL_IMAGE_BYTES : MAX_MODEL_FILE_BYTES;
   let bytes: Uint8Array;
   try {
     bytes = await sandbox.readFile(await computer(), storedPath, context, {
-      maxBytes: MAX_MODEL_FILE_BYTES,
+      maxBytes: byteLimit,
     });
   } catch (error) {
     if (error instanceof Error && /exceeds \d+ bytes/.test(error.message)) {
@@ -94,6 +145,35 @@ export async function readFileFromTool(
       };
     }
     throw error;
+  }
+  const imageMime = detectImageMimeType(bytes);
+  if (imageMime) {
+    if (bytes.byteLength > MAX_MODEL_IMAGE_BYTES) {
+      return {
+        error: "image is too large for model context",
+        path: filePath,
+        size: bytes.byteLength,
+      };
+    }
+    const meta = { path: filePath, mimeType: imageMime, bytes: bytes.byteLength };
+    if (!workspace.acceptsImages) {
+      return {
+        ...meta,
+        note: "This model cannot see images directly; use the path in ocsc pptx/word specs.",
+      };
+    }
+    return {
+      kind: "agent_tool_result" as const,
+      content: [
+        { type: "text" as const, text: JSON.stringify(meta) },
+        {
+          type: "image" as const,
+          mimeType: imageMime,
+          data: Buffer.from(bytes).toString("base64"),
+        },
+      ],
+      details: meta,
+    };
   }
   if (bytes.byteLength > MAX_MODEL_FILE_BYTES) {
     return {

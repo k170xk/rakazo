@@ -31,11 +31,49 @@ const PDF_EXPORT_NOTE = (file: string) =>
 
 const INLINE_SPEC_NOTE = `Give each new or edit spec in the ocsc call itself: put the JSON in the ocsc tool's spec field, beside program and args with --spec <path>. It is saved at that path before the command runs, so no separate write_file is needed and the document is made or changed in one step.`;
 
+const MULTI_FILE_EXTRACT_NOTE = `EXTRACTING CONTENT, TABLES & EMBEDDED PHOTOS FROM UPLOADED FILES (NO COMPUTER NEEDED): when the person uploads one or more files of ANY type (Word .docx/.doc, PowerPoint .pptx, Excel .xlsx/.xls, PDF, CSV/TSV, ZIP, HTML, images) and wants to pull out photos/images, tables, text, or merge data across multiple files into a presentation, report or spreadsheet, use the ocsc tool on the document runners:
+- First fetch_file each uploaded attachment so it is in attachments/.
+- Run ocsc program "extract", args ["all", "--out", "work/extracted"] (or args ["run", "--in", "attachments/...", "--out", "work/extracted", "--render-pages"] for specific files / scanned PDFs / drawings). It extracts EVERY embedded image/photo (mapped to its heading, slide or page), EVERY table/sheet as CSV, full text, rendered PDF pages, and safely unpacks ZIP bundles into work/extracted/manifest.json.
+- Call read_file on extracted images or rendered PDF pages (work/extracted/.../*.png|*.jpg) to visually inspect them before choosing photos or reading scanned pages.
+- For merging multiple spreadsheets/CSVs, exact calculations, reconciliation, custom matplotlib charts, or cropping/resizing extracted photos, run ocsc program "python", args ["run"], spec "<python code>" (offline sandbox with pandas, openpyxl, python-docx, python-pptx, pypdf, pdfplumber, matplotlib, PIL/Pillow, xlrd, bs4, numpy). Then pass the resulting image/chart/data paths straight into ocsc pptx/word/xlsx new — always build final OCSC deliverables with ocsc-pptx / ocsc-word / ocsc-xlsx so OCSC branding is preserved.`;
+
+const EXTRACT_INSTRUCTIONS = `Use this whenever the person uploads multiple files, mixed file types (Word, PowerPoint, Excel, PDF, CSV, ZIP, legacy .doc/.xls, HTML, images), asks to extract embedded photos/images or tables from documents, uploads scanned PDFs/drawings, or asks to merge, compare, reconcile, calculate or chart data across files — all of this runs on the company document runners without needing full computer access.
+
+1. FETCH UPLOADED FILES FIRST
+Call fetch_file for each attachment the person uploaded so all files are present in attachments/.
+
+2. EXTRACT EVERYTHING IN ONE CALL (ocsc extract)
+- Quick overview without writing files:
+  ocsc tool: program "extract", args ["inspect", "--all"] (or "--in", "attachments/File1.docx", "--in", "attachments/File2.xlsx")
+- Full extraction across all uploaded files:
+  ocsc tool: program "extract", args ["all", "--out", "work/extracted"]
+- Specific files or PDF page rendering (for drawings, figures, or scanned PDFs):
+  ocsc tool: program "extract", args ["run", "--in", "attachments/Report.pdf", "--out", "work/extracted", "--render-pages", "--pages", "1-10", "--dpi", "150"]
+- What ocsc extract produces in work/extracted/manifest.json:
+  - Word (.docx): text.txt, every table as CSV (tables/table-NN.csv), and EVERY embedded photo/image (images/) with its section heading, alt text and dimensions.
+  - PowerPoint (.pptx): text.txt, slides.json (titles, text, notes), every slide table as CSV, and EVERY embedded photo/image mapped to slide number and title.
+  - Excel (.xlsx/.xlsm/.xls): every sheet exported as CSV (sheets/NN-name.csv) with headers/row counts/sample rows, plus EVERY embedded workbook image.
+  - PDF (.pdf): text.txt per page, tables via pdfplumber as CSV, embedded images via pdfimages, AND rendered PNG pages (automatically for scanned pages, or for any pages via --render-pages).
+  - CSV/TSV, legacy .doc, RTF, ODT, HTML, JSON, XML, images, and ZIP archives (safely unpacked with zip-slip protection and nested extraction).
+
+3. VISUALLY INSPECT EXTRACTED PHOTOS & SCANNED PAGES
+Call read_file on any extracted PNG/JPEG/WebP image path (e.g. work/extracted/report/images/img-01.png or work/extracted/drawing/pages/page-001.png) to see what each photo or scanned page actually shows before placing it on a slide or writing captions.
+
+4. MERGE, CALCULATE, CHART & PREP ASSETS WITH OFFLINE PYTHON (ocsc python)
+- Run Python directly in the isolated offline runner (no network; pandas, openpyxl, python-docx, python-pptx, pypdf, pdfplumber, matplotlib, PIL/Pillow, xlrd, bs4, lxml, numpy, scipy pre-installed):
+  ocsc tool: program "python", args ["run"], spec "<python script>"
+  (Or write_file to work/process.py then args ["run", "--script", "work/process.py"].)
+- Check available packages anytime with program "python", args ["libs"].
+- Save processed CSVs, JSON summaries, high-res matplotlib charts (work/charts/*.png), or cropped/resized images (work/images/*.png) inside work/ or outputs/. The tool returns stdout, stderr, and filesCreated with image dimensions.
+- Use ocsc python for data wrangling, multi-file merging, calculations, custom charts, and image preparation — then build the final branded presentation, report, or workbook with ocsc pptx / ocsc word / ocsc xlsx so OCSC branding and templates stay intact.`;
+
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
 A person's OCSC CV for a tender, bid or client — their profile, jobs and project experience — is mcp__evolve__create_staff_cv, not a document you write here. Call that tool immediately and do not draft the CV, pick the people or the jobs, or ask them to choose in chat. The first card takes one person or several; the later cards apply the same projects, special mentions and other projects to every CV.
 
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding. ${INLINE_SPEC_NOTE}
+
+${MULTI_FILE_EXTRACT_NOTE}
 
 TEMPLATES
 Run: ocsc-word templates
@@ -174,6 +212,8 @@ const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a dec
 
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline. ${INLINE_SPEC_NOTE}
 
+${MULTI_FILE_EXTRACT_NOTE}
+
 BEFORE YOU START A NEW DECK
 ${SETUP_QUESTIONS_NOTE}
 1. "Should the deck include OCSC's company introduction?" with options "Yes: about OCSC and our sectors", "Yes, plus company structure", "No, just the topic". These are pages kept in the template, added with "include": "about" is About OCSC, the practice's history and a map of our offices (Dublin, London, Belfast, Birmingham, Cork, Galway); "disciplines" is an infographic of OCSC's civil, structural, mechanical, electrical, environmental and sustainability engineering; "services" lists OCSC's services and sectors; "company_structure" is the company structure chart; "organogram_civil_structural", "organogram_mechanical_electrical" and "organogram_environmental" are the board and directors of each division. For the first answer include about, disciplines and services, in that order; for the second add company_structure and the organogram of the division the deck is about. Put them straight after the agenda. Default: no, unless the deck is for a client, a bid or an introduction to OCSC.
@@ -276,6 +316,8 @@ Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes 
 const EXCEL_INSTRUCTIONS = `Use this whenever the person wants a spreadsheet, workbook, cost plan, schedule, register, tracker or any .xlsx, or wants one changed.
 
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas. ${INLINE_SPEC_NOTE}
+
+${MULTI_FILE_EXTRACT_NOTE}
 
 CREATE
 1. Write the spec for work/<short-name>.json:
@@ -877,6 +919,12 @@ export const OCSC_SKILLS: OcscSkill[] = [
     name: "ocsc-pdf",
     description: "Any PDF to make or read: OCSC-branded, made with ocsc-pdf",
     body: PDF_INSTRUCTIONS,
+  },
+  {
+    name: "ocsc-extract",
+    description:
+      "Extract photos/images, tables, text, rendered PDF pages or ZIP contents from any uploaded files (Word, PowerPoint, Excel, PDF, CSV, ZIP), and merge/analyse/chart multi-file data offline with ocsc python (no computer needed)",
+    body: EXTRACT_INSTRUCTIONS,
   },
   {
     name: "ocsc-pdf-markup",

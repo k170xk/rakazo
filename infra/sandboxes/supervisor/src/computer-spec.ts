@@ -50,6 +50,8 @@ export const COMPUTER_IMAGE_CONTEXT_FILES = [
   "rakazo-local-bin.sh",
   "ocsc/ocsc-word",
   "ocsc/ocsc-plan",
+  "ocsc/ocsc-extract",
+  "ocsc/ocsc-python",
   "ocsc/ocsc-video",
   "ocsc/ocsc-tool",
   "ocsc/ocsc-app-shot",

@@ -287,6 +287,24 @@ describe("tool run container", () => {
     expect(options.HostConfig.Tmpfs).not.toHaveProperty("/opt/ocsc-video/.work");
   });
 
+  it("gives extract and python strictly offline containers with no network or DNS", () => {
+    for (const program of ["extract", "python"] as const) {
+      const options = toolRunContainerOptions({
+        name: `rakazo-tool-run-${program}`,
+        image: "rakazo/computer:local",
+        user: "1000:1000",
+        request: toolRunRequestSchema.parse({ ...valid, program, args: ["help"] }),
+        storage: { homePath: "/srv/data/homes/team-a" },
+        networkMode: "rakazo-net-tool-runs",
+        dns: ["1.1.1.1"],
+      });
+      expect(options.Entrypoint).toEqual([`/usr/local/bin/ocsc-${program}`]);
+      expect(options.HostConfig.NetworkMode).toBe("none");
+      expect(options.HostConfig.Dns).toBeUndefined();
+      expect(options.HostConfig.ReadonlyRootfs).toBe(true);
+    }
+  });
+
   it("gives a video twice a document's cores", () => {
     const options = toolRunContainerOptions({
       name: "rakazo-tool-run-v",

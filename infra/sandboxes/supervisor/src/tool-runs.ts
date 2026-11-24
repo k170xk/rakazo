@@ -24,7 +24,20 @@ import { parseMemoryBytes, parseNanoCpus, parsePidsLimit } from "./computer-spec
  * nothing else. Colleague conversations and Tools-only people work here, so their files never
  * sit where somebody's own computer, and so their shell, could reach them.
  */
-export const TOOL_RUN_PROGRAMS = ["word", "pptx", "xlsx", "pdf", "plan", "video", "app-shot"] as const;
+export const TOOL_RUN_PROGRAMS = [
+  "word",
+  "pptx",
+  "xlsx",
+  "pdf",
+  "plan",
+  "extract",
+  "python",
+  "video",
+  "app-shot",
+] as const;
+
+/** Offline-only programs that must never have any network access inside their container. */
+export const OFFLINE_TOOL_RUN_PROGRAMS: ReadonlySet<string> = new Set(["extract", "python"]);
 export const TOOL_RUN_LABEL = "rakazo.toolRun";
 /** Network id shared by every tool run, kept apart from each person's computer network. */
 export const TOOL_RUN_NETWORK_ID = "tool-runs";
@@ -588,6 +601,7 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
   const workDir = path.posix.join("/work", input.request.cwd);
   const large = input.request.large === true && input.request.program !== "video";
   const limits = toolRunLimits(input.request.program, large);
+  const offline = OFFLINE_TOOL_RUN_PROGRAMS.has(input.request.program);
   const { homeVolume } = input.storage;
   return {
     Image: input.image,
@@ -653,8 +667,8 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
       ...limits,
       // A crashed tool would otherwise leave a memory dump the size of its memory in the folder.
       Ulimits: [{ Name: "core", Soft: 0, Hard: 0 }],
-      NetworkMode: input.networkMode ?? "bridge",
-      ...(input.dns ? { Dns: input.dns } : {}),
+      NetworkMode: offline ? "none" : (input.networkMode ?? "bridge"),
+      ...(!offline && input.dns ? { Dns: input.dns } : {}),
       AutoRemove: false,
     },
   };

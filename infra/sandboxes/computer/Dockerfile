@@ -199,6 +199,12 @@ COPY --from=ocsc-builder /usr/local/bin/node /usr/local/bin/node
 COPY --from=ocsc-builder /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
 COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
 COPY --from=ocsc-builder /opt/ocsc-plan /opt/ocsc-plan
+COPY --chmod=755 ocsc/ocsc-extract /opt/ocsc-extract
+COPY --chmod=755 ocsc/ocsc-python /opt/ocsc-python
+# Extra Python document libraries for ocsc-extract and offline ocsc-python data/document processing.
+RUN uv pip install --system --break-system-packages --no-cache \
+      python-docx python-pptx pypdf pdfplumber xlrd beautifulsoup4 \
+  && python3 -c 'import docx, pptx, pypdf, pdfplumber, xlrd, bs4, pandas, openpyxl, matplotlib, PIL; print("ocsc-python libs ok")'
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
@@ -208,10 +214,10 @@ COPY --chmod=755 ocsc/ocsc-app-shot /opt/ocsc-app-shot
 # Evolve PDF Studio: the OCSC build of Open PDF Studio for PDF markups, opened in the visible browser.
 # Its web bundle (ocsc/pdf-studio/app) comes from ocsc/pdf-studio/build-app.sh before the image build.
 COPY ocsc/pdf-studio /opt/pdf-studio
-RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool \
+RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool /opt/ocsc-extract/ocsc-extract.mjs /opt/ocsc-extract/extract_helper.py /opt/ocsc-python/ocsc-python.mjs \
   && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-  && for tool in word pptx xlsx pdf plan show video plugin pdf-studio app-shot; do \
+  && for tool in word pptx xlsx pdf plan extract python show video plugin pdf-studio app-shot; do \
        ln -s /usr/local/lib/rakazo/ocsc-tool "/usr/local/bin/ocsc-${tool}"; \
      done \
   && mkdir -p /usr/local/share/fonts/ocsc \

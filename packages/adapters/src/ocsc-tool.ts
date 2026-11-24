@@ -18,6 +18,8 @@ export const OCSC_PROGRAMS: ReadonlySet<string> = new Set([
   "xlsx",
   "pdf",
   "plan",
+  "extract",
+  "python",
   "video",
 ]);
 
@@ -28,6 +30,8 @@ const PROGRAM_SKILLS: Readonly<Record<string, string>> = {
   xlsx: "ocsc-excel",
   pdf: "ocsc-pdf",
   plan: "ocsc-plan",
+  extract: "ocsc-extract",
+  python: "ocsc-extract",
   video: "ocsc-video",
 };
 
@@ -50,7 +54,7 @@ const PROGRAM_FILES: Readonly<Record<string, string>> = {
 
 /** The kinds of file the ocsc tool may make, for instructions: "Word, PowerPoint and PDF files". */
 export function ocscFileKinds(off: ReadonlySet<string> = switchedOffOcscPrograms()): string {
-  const kinds = [...OCSC_PROGRAMS]
+  const kinds = Object.keys(PROGRAM_FILES)
     .filter((program) => !off.has(program))
     .map((program) => PROGRAM_FILES[program]);
   if (kinds.length <= 1) return `${kinds[0] ?? "no"} files`;
@@ -128,6 +132,7 @@ const READ_ONLY_STEPS: ReadonlySet<string> = new Set([
   "cancel",
   "read",
   "inspect",
+  "libs",
   "audit",
   "help",
 ]);
@@ -268,18 +273,20 @@ export function ocscProgramArgs(args: readonly string[]): string[] {
   return args.filter((arg) => arg !== NEW_DOCUMENT_FLAG);
 }
 
-/** The ocsc steps that read a --spec file. */
+/** The ocsc steps that read a --spec file (or --script for python). */
 const SPEC_STEPS: Readonly<Record<string, readonly string[]>> = {
   word: ["new", "edit"],
   pptx: ["new", "edit"],
   xlsx: ["new", "edit"],
   plan: ["new", "edit"],
   video: ["read", "still", "render"],
+  python: ["run"],
 };
 
 /**
  * A spec passed with the ocsc call itself, saved where its --spec path names (one is added when
  * missing) so a document is made or edited in one step instead of write_file then ocsc.
+ * For `ocsc python run`, spec carries raw Python source saved at `--script` (default work/<name>.py).
  */
 export function inlineOcscSpec(
   program: string,
@@ -290,6 +297,19 @@ export function inlineOcscSpec(
   if (spec === undefined || spec === null || spec === "") return { args: [...args] };
   if (!SPEC_STEPS[program]?.includes(args[0] ?? "")) {
     return { error: `ocsc ${program} ${args[0] ?? ""} takes no spec; leave spec out.` };
+  }
+  if (program === "python") {
+    if (typeof spec !== "string" || !spec.trim()) {
+      return { error: "spec for ocsc python run must be a Python script string." };
+    }
+    const at = args.indexOf("--script");
+    if (at >= 0) {
+      const given = args[at + 1];
+      if (!given || given.startsWith("--")) return { error: "--script needs a path after it." };
+      return { args: [...args], path: given, content: spec };
+    }
+    const added = `work/${name}.py`;
+    return { args: [...args, "--script", added], path: added, content: spec };
   }
   const text = typeof spec === "string" ? spec : JSON.stringify(spec, null, 2);
   try {

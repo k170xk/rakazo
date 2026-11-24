@@ -17,6 +17,8 @@ export const RUNNER_PROGRAMS: ReadonlySet<string> = new Set([
   "xlsx",
   "pdf",
   "plan",
+  "extract",
+  "python",
   "video",
 ]);
 /** Server folder beside the homes holding colleague conversation folders; no computer mounts it. */

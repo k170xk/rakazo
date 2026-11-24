@@ -48,6 +48,7 @@ function runWorkspace(ctx: RunContext, call: ToolCall): RunWorkspace {
     markDirty: () => ctx.computer.checkpoint.markDirty(),
     context: ctx.context,
     runSecrets: ctx.secrets,
+    acceptsImages: ctx.computer.acceptsImages,
   };
 }
 
