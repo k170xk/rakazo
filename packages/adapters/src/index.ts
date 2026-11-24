@@ -105,6 +105,7 @@ export * from "./evolve-plugins.js";
 export * from "./evolve-references.js";
 export * from "./executor.js";
 export * from "./expo-push.js";
+export * from "./onesignal-push.js";
 export * from "./fake-browser.js";
 export * from "./fake-sandbox.js";
 export * from "./fake-web.js";

@@ -15,7 +15,8 @@
     "@capacitor/core": "^8.6.2",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.6.2",
-    "@capacitor/keyboard": "^8.0.6"
+    "@capacitor/keyboard": "^8.0.6",
+    "@onesignal/capacitor-plugin": "^1.2.3"
   },
   "devDependencies": {
     "@capacitor/assets": "^4.0.0",

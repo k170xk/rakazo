@@ -17,12 +17,17 @@ import {
   requestBrowserNotificationPermission,
   shouldOfferBrowserNotificationsPrompt,
 } from "../lib/browser-notifications";
+import {
+  nativePushAvailable,
+  nativePushPermissionState,
+  requestNativePushPermission,
+} from "../lib/capacitor-push";
 
 const OFFER_DELAY_MS = 1_200;
 
 /**
- * First-run dialogue that explains desktop notifications, then asks the browser for permission
- * from the Enable click (required user gesture).
+ * First-run dialogue that explains notifications, then asks for permission from the Enable
+ * click (required user gesture). Capacitor uses the native prompt; browsers use Notification.
  */
 export function EnableNotificationsDialog({
   userId,
@@ -40,23 +45,35 @@ export function EnableNotificationsDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const native = nativePushAvailable();
 
   useEffect(() => {
     if (!ready || !userId || open) return;
-    const permission: BrowserNotificationPermission | undefined =
-      typeof Notification === "undefined" ? undefined : Notification.permission;
-    if (
-      !shouldOfferBrowserNotificationsPrompt({
-        userId,
-        permission,
-        blockedByOverlay,
-      })
-    ) {
-      return;
-    }
-    const timer = window.setTimeout(() => setOpen(true), OFFER_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [ready, userId, blockedByOverlay, open]);
+    let cancelled = false;
+    let timer: number | undefined;
+    void (async () => {
+      const permission: BrowserNotificationPermission | undefined = native
+        ? await nativePushPermissionState()
+        : typeof Notification === "undefined"
+          ? undefined
+          : Notification.permission;
+      if (
+        cancelled ||
+        !shouldOfferBrowserNotificationsPrompt({
+          userId,
+          permission,
+          blockedByOverlay,
+        })
+      ) {
+        return;
+      }
+      timer = window.setTimeout(() => setOpen(true), OFFER_DELAY_MS);
+    })();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [ready, userId, blockedByOverlay, open, native]);
 
   if (!open || !userId) return null;
 
@@ -71,7 +88,8 @@ export function EnableNotificationsDialog({
     markBrowserNotificationsPromptSeen(userId);
     void (async () => {
       try {
-        await requestBrowserNotificationPermission();
+        if (native) await requestNativePushPermission();
+        else await requestBrowserNotificationPermission();
         onEnabled?.();
       } finally {
         setBusy(false);
@@ -96,10 +114,17 @@ export function EnableNotificationsDialog({
             <Trans>Stay up to date</Trans>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <Trans>
-              Get notified when your work finishes, an agent needs your input, or a routine
-              completes — even when you are in another tab.
-            </Trans>
+            {native ? (
+              <Trans>
+                Get notified when your work finishes or an agent needs your input — even when the
+                app is in the background.
+              </Trans>
+            ) : (
+              <Trans>
+                Get notified when your work finishes, an agent needs your input, or a routine
+                completes — even when you are in another tab.
+              </Trans>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

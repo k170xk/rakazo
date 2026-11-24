@@ -11,6 +11,7 @@ import { I18nBootstrap } from "./components/I18nBootstrap";
 import { InstallAppBanner } from "./components/InstallAppBanner";
 import { applyUiDirection } from "./lib/apply-ui-direction";
 import { clientUpdates } from "./lib/client-update";
+import { installNativePushRouting } from "./lib/capacitor-push";
 import { installSelectionHaptics } from "./lib/haptics";
 import { webLogoAvatarActivity } from "./lib/logo-avatar-activity";
 import { reportCaughtReactError } from "./lib/monitoring";
@@ -34,6 +35,8 @@ captureInstallPrompt();
 lockStandaloneZoom();
 installSelectionHaptics();
 installNativeDownloads();
+// Cold-start taps are retained until this listener attaches.
+installNativePushRouting();
 applyUiDirection(resolveUiLocale());
 applyUiAppearance();
 captureReferral(window.location.search);

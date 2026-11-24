@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_DEFAULT_UI_LOCALE?: string;
+  /** Public push app id for the Capacitor shell; leave unset in browser builds. */
+  readonly VITE_PUSH_APP_ID?: string;
   /** Build id (`YYYYMMDDHHMMSS`) of a production build; empty on the dev server. */
   readonly RAKAZO_BUILD?: string;
 }

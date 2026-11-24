@@ -69,7 +69,10 @@ import {
   EmailEmulator,
   EvolveCompanyTools,
   ExpoPushProvider,
+  expoPushFrom,
+  FanoutNotificationProvider,
   GraphileJobPublisher,
+  OneSignalPushProvider,
   InMemoryJobQueue,
   InMemoryRealtimeFanout,
   InstalledConnectorProvider,
@@ -583,7 +586,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
           sessionRoot: env.piSessionRecording ? piSessionsRoot(env.dataDir) : undefined,
         }));
   const pushTokens = new PrismaPushTokenStore(prisma, env.encryptionKey);
-  const notifications =
+  const expoPush =
     notificationsOverride ??
     new ExpoPushProvider(pushTokens, {
       sessionExpiresAt: (sessionId) => pushSessionExpiresAt(prisma, sessionId),
@@ -591,6 +594,16 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       accessToken: env.expoAccessToken,
       voip: await createApnsVoipProvider(env.apnsVoip),
     });
+  const onesignalPush =
+    !notificationsOverride && env.onesignalAppId && env.onesignalRestApiKey
+      ? new OneSignalPushProvider({
+          appId: env.onesignalAppId,
+          apiKey: env.onesignalRestApiKey,
+        })
+      : undefined;
+  const notifications = onesignalPush
+    ? new FanoutNotificationProvider([expoPush, onesignalPush])
+    : expoPush;
   const userDeviceSecret = userDeviceForwardSecret(env.encryptionKey);
   const userDeviceHub = env.userDevicesEnabled
     ? new UserDeviceHub({ prisma, address: userDeviceInternalAddress(env.apiHost, env.port) })
@@ -774,7 +787,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     // Every API container runs node as the same pid, and deploys run old and new side by side.
     workerId: `${hostname()}:${process.pid}`,
     runtime,
-    notifications: notifications instanceof ExpoPushProvider ? notifications : undefined,
+    notifications: expoPushFrom(notifications),
     secretStore: secrets,
     memoryProviders,
     deploymentModelKey: env.deploymentModelKey,

@@ -56,8 +56,11 @@ import {
   deploymentModelUsageLookup,
   EvolveCompanyTools,
   ExpoPushProvider,
+  expoPushFrom,
   expiringFilesNotice,
+  FanoutNotificationProvider,
   GraphileJobPublisher,
+  OneSignalPushProvider,
   homeStorageSweeper,
   INFRA_SAMPLE_INTERVAL_MS,
   InMemoryJobQueue,
@@ -385,12 +388,21 @@ async function main() {
   const paymentWallet = await createPaymentWalletProvider();
   // Shared with the reconciler so a stuck wait uses the same push path as a finish notice.
   const pushTokens = new PrismaPushTokenStore(prisma, resolveEncryptionKey(process.env));
-  const notifications = new ExpoPushProvider(pushTokens, {
+  const expoPush = new ExpoPushProvider(pushTokens, {
     sessionExpiresAt: (sessionId) => pushSessionExpiresAt(prisma, sessionId),
     jobs,
     accessToken: process.env.EXPO_ACCESS_TOKEN,
     voip: await createApnsVoipProvider(apnsVoipConfig(process.env)),
   });
+  const onesignalAppId = process.env.ONESIGNAL_APP_ID?.trim();
+  const onesignalRestApiKey = process.env.ONESIGNAL_REST_API_KEY?.trim();
+  const onesignalPush =
+    onesignalAppId && onesignalRestApiKey
+      ? new OneSignalPushProvider({ appId: onesignalAppId, apiKey: onesignalRestApiKey })
+      : undefined;
+  const notifications = onesignalPush
+    ? new FanoutNotificationProvider([expoPush, onesignalPush])
+    : expoPush;
   // A tap opens the chat of the bot holding most of the files; the app then opens Manage storage.
   const notifyExpiringFiles = async (expiring: ExpiringFiles) => {
     const bot = await runAsSystem("find the bot for an expiring files notice", () =>
@@ -509,7 +521,7 @@ async function main() {
     messaging,
     cloudAgent,
     paymentWallet,
-    notifications,
+    notifications: expoPushFrom(notifications),
   });
   const reconciler = createJobReconciler({
     prisma,

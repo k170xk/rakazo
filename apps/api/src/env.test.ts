@@ -317,6 +317,21 @@ describe("loadEnv", () => {
     );
   });
 
+  it("loads optional Capacitor push credentials", () => {
+    expect(loadEnv(base).onesignalAppId).toBeUndefined();
+    expect(loadEnv(base).onesignalRestApiKey).toBeUndefined();
+    expect(
+      loadEnv({
+        ...base,
+        ONESIGNAL_APP_ID: " app-id ",
+        ONESIGNAL_REST_API_KEY: " rest-key ",
+      }),
+    ).toMatchObject({
+      onesignalAppId: "app-id",
+      onesignalRestApiKey: "rest-key",
+    });
+  });
+
   it("loads SMTP configuration and keeps the email emulator out of production", () => {
     expect(
       loadEnv({

@@ -1,5 +1,5 @@
 {
-  "originHash" : "b142a971ee8b02cd9beae57c73c5879e1bed5b667d0211834bc35c0d948577a4",
+  "originHash" : "f720bafcaad6fa5d67d4f2ad56735466bd225cd9fb93502412ca0e5437af671e",
   "pins" : [
     {
       "identity" : "capacitor-swift-pm",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "b945758eaf3f034cea377e3138a60611cb40a88b",
         "version" : "8.6.2"
+      }
+    },
+    {
+      "identity" : "onesignal-xcframework",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/OneSignal/OneSignal-XCFramework",
+      "state" : {
+        "revision" : "f49b88ed897d9eb884bd747b6a7c1fea40406692",
+        "version" : "5.8.1"
       }
     }
   ],

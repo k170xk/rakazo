@@ -75,6 +75,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { openNativePushChat, subscribeOpenPushChat } from "../lib/capacitor-push";
 import { applyCompanyChatSettings } from "../lib/company-chat-settings";
 import {
   getComposerEnterToSend,
@@ -794,6 +795,14 @@ function SpaceShell() {
   useLayoutEffect(() => {
     openSpaceChatRef.current = openSpaceChat;
   }, [openSpaceChat]);
+  useEffect(() => {
+    return subscribeOpenPushChat((target) => {
+      void openNativePushChat(target, {
+        userId: userId ?? null,
+        openSpaceChat,
+      });
+    });
+  }, [openSpaceChat, userId]);
 
   const activeSnapshot = inGroup
     ? snapshot?.groupId === groupId

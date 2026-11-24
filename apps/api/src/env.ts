@@ -120,6 +120,10 @@ export interface AppEnv {
   sendblueSigningSecret: string | undefined;
   sendbluePhoneNumber: string | undefined;
   expoAccessToken: string | undefined;
+  /** Public OneSignal app id for Capacitor push; paired with the REST key below. */
+  onesignalAppId: string | undefined;
+  /** OneSignal REST API key; server-only, never exposed to clients. */
+  onesignalRestApiKey: string | undefined;
   apnsVoip?: ApnsVoipConfig;
   smtpUrl: string | undefined;
   emailProvider?: string;
@@ -309,6 +313,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     sendblueSigningSecret: optional(source.SENDBLUE_SIGNING_SECRET),
     sendbluePhoneNumber: optional(source.SENDBLUE_PHONE_NUMBER),
     expoAccessToken: optional(source.EXPO_ACCESS_TOKEN),
+    onesignalAppId: optional(source.ONESIGNAL_APP_ID),
+    onesignalRestApiKey: optional(source.ONESIGNAL_REST_API_KEY),
     apnsVoip: apnsVoipConfig(source),
     smtpUrl: optional(source.SMTP_URL),
     emailProvider: optional(source.EMAIL_PROVIDER),

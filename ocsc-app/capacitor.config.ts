@@ -21,6 +21,8 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "never",
+    // OneSignal owns APNs registration; Capacitor must not claim the same callbacks.
+    handleApplicationNotifications: false,
   },
   plugins: {
     // The web view shrinks to sit above the keyboard, so the message box stays visible.

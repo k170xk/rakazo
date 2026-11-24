@@ -41,6 +41,34 @@ EXPO_ACCESS_TOKEN=replace-with-your-expo-access-token
 Leave it unset when enhanced security is off. A missing or revoked token fails the push with an
 error that names `EXPO_ACCESS_TOKEN`; the token itself is never logged.
 
+### Capacitor shell push
+
+The Capacitor iOS/Android shell can also receive completion and approval pushes through OneSignal,
+alongside Expo delivery for the Expo mobile app. Target users by authenticated account id
+(`external_id`); device tokens are not stored in the Rakazo database.
+
+Set both API and worker secrets (and bake the public app id into the web build the shell loads):
+
+```env
+ONESIGNAL_APP_ID=replace-with-onesignal-app-id
+ONESIGNAL_REST_API_KEY=replace-with-onesignal-rest-api-key
+```
+
+```env
+# apps/web build
+VITE_PUSH_APP_ID=replace-with-onesignal-app-id
+```
+
+Leave them unset when the Capacitor shell is not used. Never commit `ONESIGNAL_REST_API_KEY`,
+APNs `.p8` keys, or Android `google-services.json`. Place `google-services.json` only under
+`ocsc-app/android/app/` on build machines. For iOS, enable Push Notifications on the App ID,
+upload APNs credentials in the OneSignal dashboard, and set `aps-environment` to `production`
+for TestFlight/App Store builds (the checked-in entitlement defaults to `development`).
+
+Verify on physical devices: sign in on the Capacitor app, confirm the user appears under
+OneSignal → Audience with the account id as External ID, send a dashboard test push, then
+complete a bot run and an approval pause and confirm each opens the originating chat.
+
 ### Mobile incoming calls
 
 Incoming calls ring in the mobile app while it is open. Registered devices also receive an

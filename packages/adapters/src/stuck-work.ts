@@ -16,6 +16,7 @@ import { appendEventInTransaction, expireStuckRun, withTransactionRetry } from "
 import { getLogger } from "@rakazo/logging";
 import { ExpoPushProvider } from "./expo-push.js";
 import { notificationIdentity } from "./notification-identity.js";
+import { notificationChannelCanDeliver } from "./onesignal-push.js";
 import { publishChatAlert } from "./run-notifications.js";
 
 type StuckCursor = { at: Date; id: string };
@@ -236,8 +237,7 @@ async function pushCanDeliver(
   notifications: NotificationProvider,
   userId: string,
 ): Promise<boolean> {
-  if (!(notifications instanceof ExpoPushProvider)) return true;
-  return notifications.hasPushRecipient(userId);
+  return notificationChannelCanDeliver(notifications, userId);
 }
 
 async function claimStuckReminder(

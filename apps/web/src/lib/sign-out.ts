@@ -2,6 +2,7 @@ import { t } from "@lingui/core/macro";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "./auth";
 import { endCallBeforeSignOut, forgetSignedInUser, sessionChangedUnderPage } from "./call-session";
+import { syncNativePushUser } from "./capacitor-push";
 import { clearComposerDrafts } from "./composer-draft";
 import { clearSpaceSelection } from "./rpc";
 
@@ -27,6 +28,7 @@ export async function signOut(destination: string): Promise<void> {
     forgetSignedInUser();
     clearSpaceSelection();
     clearComposerDrafts();
+    await syncNativePushUser(null).catch(() => undefined);
     window.location.assign(destination);
   } else {
     try {
