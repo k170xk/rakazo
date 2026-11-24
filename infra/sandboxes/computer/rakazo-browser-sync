@@ -14,6 +14,7 @@ import contextlib
 import fcntl
 import json
 import os
+import re
 import shutil
 import signal
 import sqlite3
@@ -25,8 +26,20 @@ import time
 LOCK_PATH = "/tmp/rakazo/browser-profile-sync.lock"
 SESSION_DIR_NAME = "user-session"
 WEB_STORAGE_ARCHIVE = "web-storage.tar.gz"
+PROFILE_WEB_STORAGE_ARCHIVE = "rakazo-web-storage.tar.gz"
 WEB_STORAGE_DIRS = ("Local Storage", "IndexedDB", "Session Storage")
 SKIP_STORAGE_NAMES = {"LOCK", "LOG", "LOG.old"}
+CHROME_EPOCH_OFFSET_US = 11_644_473_600 * 1_000_000
+
+# Google/YouTube rotate short-lived anti-theft tokens (SIDCC / __Secure-1PSIDCC /
+# __Secure-3PSIDCC / __Secure-1PSIDTS) tied to one browser instance. Cloning them
+# across concurrent per-bot Chrome profiles triggers Google's session-hijacking
+# detector and revokes the user's Google/Google Ads session. Each bot profile
+# keeps its own Google cookies on disk across sleep/wake instead.
+SINGLE_PROFILE_COOKIE_HOST_RE = re.compile(
+    r"(?:^|\.)(?:google(?:\.[a-z]{2,3}){1,2}|youtube\.com|googleapis\.com)$",
+    re.IGNORECASE,
+)
 
 COOKIE_KEY_COLS = (
     "host_key",
@@ -183,6 +196,44 @@ def table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
     return [row[1] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()]
 
 
+def now_chrome_utc() -> int:
+    return int(time.time() * 1_000_000) + CHROME_EPOCH_OFFSET_US
+
+
+def is_single_profile_cookie_host(host_key: object) -> bool:
+    return isinstance(host_key, str) and bool(SINGLE_PROFILE_COOKIE_HOST_RE.search(host_key.strip()))
+
+
+def strip_single_profile_cookies(db_path: str) -> None:
+    conn = sqlite3.connect(db_path, timeout=2.0)
+    try:
+        cols = table_columns(conn, "cookies")
+        if "host_key" not in cols:
+            return
+        hosts = [r[0] for r in conn.execute('SELECT DISTINCT "host_key" FROM "cookies"')]
+        drop = [h for h in hosts if is_single_profile_cookie_host(h)]
+        if drop:
+            conn.execute("BEGIN")
+            for host in drop:
+                conn.execute('DELETE FROM "cookies" WHERE "host_key" = ?', (host,))
+            conn.commit()
+    except Exception:
+        with contextlib.suppress(Exception):
+            conn.rollback()
+    finally:
+        with contextlib.suppress(Exception):
+            conn.close()
+
+
+def row_timestamp(row: tuple, ts_idx: list[int]) -> int:
+    """Return the first non-zero timestamp column in priority order."""
+    for idx in ts_idx:
+        val = int(row[idx] or 0)
+        if val > 0:
+            return val
+    return 0
+
+
 def merge_table(
     src_db: str,
     dst_db: str,
@@ -190,6 +241,7 @@ def merge_table(
     key_candidates: tuple[str, ...],
     ts_candidates: tuple[str, ...],
     exclude_cols: tuple[str, ...] = (),
+    skip_single_profile_cookies: bool = False,
 ) -> bool:
     src = sqlite3.connect(src_db, timeout=2.0)
     dst = sqlite3.connect(dst_db, timeout=2.0)
@@ -209,18 +261,27 @@ def merge_table(
         where_key = " AND ".join(f'"{k}" IS ?' for k in keys)
         key_idx = [common.index(k) for k in keys]
         ts_idx = [common.index(t) for t in ts_cols]
+        host_idx = common.index("host_key") if "host_key" in common else None
+        expires_idx = common.index("expires_utc") if "expires_utc" in common else None
+        cutoff_utc = now_chrome_utc() if table == "cookies" else 0
 
         dst_index: dict[tuple, int] = {}
         for row in dst.execute(f'SELECT {col_list} FROM "{table}"'):
             k = tuple(row[i] for i in key_idx)
-            ts = max((int(row[i] or 0) for i in ts_idx), default=0)
-            dst_index[k] = ts
+            dst_index[k] = row_timestamp(row, ts_idx)
 
         changed = False
         dst.execute("BEGIN")
         for row in src.execute(f'SELECT {col_list} FROM "{table}"'):
+            if skip_single_profile_cookies and host_idx is not None:
+                if is_single_profile_cookie_host(row[host_idx]):
+                    continue
+            if table == "cookies" and expires_idx is not None:
+                exp = int(row[expires_idx] or 0)
+                if exp > 0 and exp < cutoff_utc:
+                    continue
             k = tuple(row[i] for i in key_idx)
-            src_ts = max((int(row[i] or 0) for i in ts_idx), default=0)
+            src_ts = row_timestamp(row, ts_idx)
             existing_ts = dst_index.get(k)
             if existing_ts is None:
                 dst.execute(
@@ -260,6 +321,8 @@ def sync_sqlite_db(src_path: str, dst_path: str, db_name: str, prefer_newer_fall
         snap = os.path.join(td, "snap.sqlite")
         if not snapshot_sqlite(src_path, snap):
             return
+        if db_name == "Cookies":
+            strip_single_profile_cookies(snap)
         if not os.path.isfile(dst_path) or os.path.getsize(dst_path) == 0:
             atomic_replace_db(snap, dst_path)
             return
@@ -271,7 +334,8 @@ def sync_sqlite_db(src_path: str, dst_path: str, db_name: str, prefer_newer_fall
                 dst_path,
                 "cookies",
                 COOKIE_KEY_COLS,
-                ("last_update_utc", "last_access_utc", "creation_utc"),
+                ("last_update_utc", "creation_utc"),
+                skip_single_profile_cookies=True,
             )
         elif db_name in ("Login Data", "Login Data For Account"):
             merged = merge_table(
@@ -399,7 +463,8 @@ def cmd_save(profile_dir: str) -> None:
     root = profiles_root()
     if not is_managed_profile(profile_dir, root):
         return
-    src_default = os.path.join(os.path.realpath(profile_dir), "Default")
+    profile_real = os.path.realpath(profile_dir)
+    src_default = os.path.join(profile_real, "Default")
     if not os.path.isdir(src_default):
         return
 
@@ -407,13 +472,19 @@ def cmd_save(profile_dir: str) -> None:
     session_default = os.path.join(session_dir, "Default")
     os.makedirs(session_default, mode=0o700, exist_ok=True)
 
-    for db_name in ("Cookies", "Login Data", "Login Data For Account", "Web Data"):
+    # Sync non-Google cookies and saved passwords into the shared user-session store.
+    # Web Data is intentionally excluded because it holds Chrome Sync's token_service
+    # OAuth refresh token, which must stay scoped to a single profile.
+    for db_name in ("Cookies", "Login Data", "Login Data For Account"):
         sync_sqlite_db(
             os.path.join(src_default, db_name),
             os.path.join(session_default, db_name),
             db_name,
             prefer_newer_fallback=True,
         )
+    session_cookies = os.path.join(session_default, "Cookies")
+    if os.path.isfile(session_cookies) and os.path.getsize(session_cookies) > 0:
+        strip_single_profile_cookies(session_cookies)
 
     src_bm = os.path.join(src_default, "Bookmarks")
     dst_bm = os.path.join(session_default, "Bookmarks")
@@ -424,14 +495,20 @@ def cmd_save(profile_dir: str) -> None:
                 shutil.copy2(src_bm, tmp_bm)
                 os.replace(tmp_bm, dst_bm)
 
-    meta = read_meta(session_dir)
+    # Preserve this profile's own LevelDB/IndexedDB/Session Storage inside its own
+    # directory as a .tar.gz so workspace-save-policy (which skips *.log) never drops
+    # this profile's tokens on sleep/wake, without mixing it into other bots' storage.
     ws_mtime = dir_tree_mtime(src_default, WEB_STORAGE_DIRS)
+    if ws_mtime > 0:
+        pack_web_storage(src_default, os.path.join(profile_real, PROFILE_WEB_STORAGE_ARCHIVE))
+
+    meta = read_meta(session_dir)
     archive_path = os.path.join(session_dir, WEB_STORAGE_ARCHIVE)
     prev_ws_mtime = float(meta.get("webStorageMtime") or 0.0)
     if ws_mtime > 0 and (not os.path.isfile(archive_path) or ws_mtime >= prev_ws_mtime):
         if pack_web_storage(src_default, archive_path):
             meta["webStorageMtime"] = ws_mtime
-            meta["lastSavedProfile"] = os.path.basename(os.path.realpath(profile_dir))
+            meta["lastSavedProfile"] = os.path.basename(profile_real)
     meta["updatedAt"] = time.time()
     write_meta(session_dir, meta)
 
@@ -462,7 +539,9 @@ def cmd_seed(target_profile: str) -> None:
                 candidates.append(cand_default)
 
     # 1. Seed / merge SQLite databases (newest first for schema init, then merge all).
-    for db_name in ("Cookies", "Login Data", "Login Data For Account", "Web Data"):
+    # Single-profile rotating Google/YouTube cookies are stripped before copy/merge so
+    # each bot profile keeps its own Google session intact.
+    for db_name in ("Cookies", "Login Data", "Login Data For Account"):
         sources = [
             (db_mtime(os.path.join(c, db_name)), os.path.join(c, db_name))
             for c in candidates
@@ -503,12 +582,18 @@ def cmd_seed(target_profile: str) -> None:
                 shutil.copy2(bm_sources[0][1], tmp_bm)
                 os.replace(tmp_bm, dst_bm)
 
-    # 3. Seed or restore Web Storage (Local Storage / IndexedDB / Session Storage).
-    # Note: workspace-save-policy skips *.log files, so after a sleep/wake an existing
-    # profile's Local Storage/leveldb directory can be missing its 000003.log file;
-    # restoring from user-session/web-storage.tar.gz recovers it cleanly.
-    target_ws_mtime = dir_tree_mtime(target_default, WEB_STORAGE_DIRS)
+    # 3. Restore Web Storage (Local Storage / IndexedDB / Session Storage) only when
+    # missing (fresh profile or post-sleep/wake after workspace-save-policy skipped *.log).
+    # Prefer this profile's own archive first; never overwrite live storage in an existing
+    # profile with another bot's storage.
     target_missing_storage = not has_leveldb_data(target_default)
+    if not target_missing_storage:
+        return
+
+    own_archive = os.path.join(target_real, PROFILE_WEB_STORAGE_ARCHIVE)
+    if os.path.isfile(own_archive) and os.path.getsize(own_archive) > 0:
+        if unpack_web_storage(own_archive, target_default):
+            return
 
     archive_path = os.path.join(session_dir, WEB_STORAGE_ARCHIVE)
     meta = read_meta(session_dir)
@@ -534,7 +619,7 @@ def cmd_seed(target_profile: str) -> None:
             best_mtime = cand_mtime
             best_src = cand_default
 
-    if best_kind and (target_missing_storage or best_mtime > target_ws_mtime + 2.0):
+    if best_kind:
         if best_kind == "archive":
             unpack_web_storage(best_src, target_default)
         else:

@@ -167,7 +167,9 @@ ENV HOME=/home/rakazo
 # Keep UTF-8 explicit (an empty LANG broke non-ASCII file handling in the
 # file chooser for CJK-market users) and generate zh_CN.UTF-8 so deployments
 # that override the computer environment can opt in to a Chinese locale.
-RUN sed -i 's/^# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/; s/^# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
+RUN sed -i 's/^# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/; s/^# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen && locale-gen \
+  && dbus-uuidgen --ensure=/var/lib/dbus/machine-id \
+  && ln -sf /var/lib/dbus/machine-id /etc/machine-id
 ENV LANG=C.UTF-8 \
     TZ=Europe/Dublin
 ENV UV_TOOL_DIR=/home/rakazo/.local/share/uv/tools \
