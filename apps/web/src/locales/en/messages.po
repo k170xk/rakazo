@@ -7936,6 +7936,10 @@ msgid "Get its own icon and window, and open it straight from your desktop."
 msgstr "Get its own icon and window, and open it straight from your desktop."
 
 #: src/components/EnableNotificationsDialog.tsx
+msgid "Get notified when your work finishes or an agent needs your input — even when the app is in the background."
+msgstr "Get notified when your work finishes or an agent needs your input — even when the app is in the background."
+
+#: src/components/EnableNotificationsDialog.tsx
 msgid "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
 msgstr "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
 
