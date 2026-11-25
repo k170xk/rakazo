@@ -47,7 +47,7 @@ Before submitting the Capacitor iOS shell, follow
 [`docs/ocsc-app-ios-store-preflight.md`](./ocsc-app-ios-store-preflight.md) and the review-notes
 draft in [`docs/ocsc-app-ios-review-notes.md`](./ocsc-app-ios-review-notes.md). The binary must
 include `PrivacyInfo.xcprivacy`, and App Review still needs a durable demo account plus a
-Capacitor AI data-sharing consent path (or the Expo client that already has one).
+deployed Capacitor AI data-sharing consent path on the web build the shell loads (or the Expo client).
 
 ### Capacitor shell push
 

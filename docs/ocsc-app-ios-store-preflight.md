@@ -7,11 +7,6 @@ This report does not change App Store Connect or production services.
 
 ### Rejections found
 
-- [GUIDELINE 5.1.2(i)] Capacitor / web shell lacks the mobile AI data-sharing consent gate
-  - File: Expo flow lives in `apps/mobile/lib/ai-consent.ts` and `apps/mobile/lib/api.ts`; `apps/web` has no equivalent gate
-  - Live shell loads `https://computer.ocsc.me`, so a local web fix also requires a production deploy before review
-  - Fix: Port Capacitor-gated consent (status → named-provider Allow / Not now → allow/revoke in Account) using the existing `aiConsent` RPC, then deploy, or submit the Expo iOS client that already implements the flow. See `docs/ai-data-sharing-review.md`
-
 - [GUIDELINE 5.1.1(i)] App Store Privacy Policy URL must be a public, accurate OCSC policy
   - `computer.ocsc.me/privacy` currently serves the SPA shell, not a standalone policy document
   - `https://rakazo.com/privacy/` is public and names AI providers, but is Inbox Zero / Rakazo branded
@@ -48,6 +43,8 @@ This report does not change App Store Connect or production services.
 - [Info.plist] Camera, microphone, photo-library, and remote-notification background mode are declared; encryption export compliance set to non-exempt false
 - [Account deletion] Web Account settings expose Delete account (`apps/web/src/components/AccountAccess.tsx`)
 - [Push consent] Capacitor first-run notifications dialogue asks before the OS prompt (`EnableNotificationsDialog`)
+- [GUIDELINE 5.1.2(i)] Capacitor AI data-sharing consent gate is implemented in `apps/web` (native shell only): RPC/voice chokepoints call `ensureCapacitorAiConsent`, `AiConsentDialog` names providers before Allow / Not now, and Account → AI data sharing supports revoke / withdraw-all. See `docs/ai-data-sharing-review.md`
+  - Operator step before App Review: deploy the updated `apps/web` build to `computer.ocsc.me`, set `PRIVACY_POLICY_URL` on the API once the OCSC policy URL is published, then verify Allow, Not now, attachment upload blocking, voice blocking, and Account withdrawal on a physical iPhone
 - [Icons / launch] Universal 1024 App Icon and launch storyboard / splash assets are present
 - [Version] Marketing version `1.0`, build `1`, deployment target iOS 15.0
 

@@ -17,6 +17,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import { AiConsentDialog } from "./components/AiConsentDialog";
 import { LoadingState } from "./components/ai/primitives";
 import { CallLayout } from "./components/call/CallLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -261,6 +262,7 @@ function SessionApp() {
   return (
     <QueryUserProvider value={user?.id ?? null}>
       <MarkdownLinkPrompt>
+        <AiConsentDialog />
         <div className="h-full" data-rakazo-app-state="ready">
           <Suspense fallback={<PageLoading />}>
             <Routes>

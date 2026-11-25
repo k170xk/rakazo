@@ -7,6 +7,7 @@ import {
   VOICE_RESPONSE_TIMEOUT_MS,
   withAbort,
 } from "@rakazo/core";
+import { ensureCapacitorAiConsent } from "./capacitor-ai-consent.js";
 import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
 
@@ -170,6 +171,16 @@ export class Speaker {
     signal: AbortSignal,
     spaceId: string | null,
   ): Promise<Blob> {
+    await ensureCapacitorAiConsent({
+      uses: ["voice"],
+      spaceId,
+      target: {
+        ...(opts.botId ? { botId: opts.botId } : {}),
+        ...(opts.scope ? { settingsScope: opts.scope } : {}),
+      },
+      status: (query) => rpc.aiConsent.status(query, { context: { spaceId } }),
+      allow: (input) => rpc.aiConsent.allow(input, { context: { spaceId } }),
+    });
     const deadline = requestDeadline(
       VOICE_RESPONSE_TIMEOUT_MS,
       t`Voice request timed out.`,

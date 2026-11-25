@@ -29,6 +29,7 @@ import type { RefObject } from "react";
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
+import { AiDataSharingSettings } from "../components/AiDataSharingSettings";
 import { SuccessPop } from "../components/ai/primitives";
 import { ComputerDeviceSettings } from "../components/ComputerDeviceSettings";
 import { ComputerProviderSettings } from "../components/ComputerProviderSettings";
@@ -43,6 +44,7 @@ import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { TrustedLinkSitesSettings } from "../components/TrustedLinkSitesSettings";
 import { fetchAccountSecurity } from "../lib/account-security";
 import { authClient } from "../lib/auth";
+import { isCapacitorNative } from "../lib/capacitor-ai-consent";
 import type { BotsSidebarDensity } from "../lib/bots-sidebar-density-pref";
 import {
   getBotsSidebarDensity,
@@ -432,6 +434,8 @@ export function GeneralSettingsPanels({
           <AccountAccess onSecurity={setAccountSecurity} />
         </SettingsGroup>
       ) : null}
+
+      {isCapacitorNative() ? <AiDataSharingSettings /> : null}
     </div>
   );
 }

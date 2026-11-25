@@ -15,7 +15,7 @@ Recorded on a physical iPhone. The recording must start at launch and show:
 - Optional voice / microphone permission if voice is enabled for the review account
 - Optional notifications permission prompt (Enable notifications dialogue)
 - Account → Delete account entry point (do not complete deletion on the shared review account)
-- AI data-sharing consent if/when that Capacitor flow is deployed (Allow and Not now)
+- AI data-sharing consent: send a first message (or use voice) so the named-provider Allow / Not now dialogue appears; optionally open Account → AI data sharing and show Withdraw
 
 ## 2. App purpose
 
@@ -32,8 +32,9 @@ OCSC Intelligence is the native iOS shell for the organisation’s private agent
 3. Open the review bot chat and send a short message.
 4. Attach an image from Photos when prompted.
 5. If offered, enable notifications from the in-app dialogue.
-6. Open Account settings to confirm Delete account is available.
-7. Do not change production model routing, billing, or organisation settings.
+6. On first AI action after a clean install (or after Account → AI data sharing → Withdraw all), confirm the named-provider consent dialogue (Allow / Not now) and the Account → AI data sharing controls.
+7. Open Account settings to confirm Delete account is available.
+8. Do not change production model routing, billing, or organisation settings.
 
 **Test account**
 
@@ -56,7 +57,7 @@ No review-only bait-and-switch flags. Any remote configuration that changes user
 | OneSignal | Push notification delivery |
 | Apple Push Notification service | Device push transport |
 
-Third-party AI recipients that receive personal content must be named in the privacy policy and in the in-app consent flow before the first request (Guideline 5.1.2(i)).
+Third-party AI recipients that receive personal content are named in the privacy policy and in the Capacitor in-app consent flow before the first request (Guideline 5.1.2(i)). Account → AI data sharing lets the reviewer withdraw permission.
 
 ## 5. Regional differences
 

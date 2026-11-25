@@ -3,9 +3,18 @@ import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
 import type { AppContract, ProductEvent } from "@rakazo/contracts";
 import { CLIENT_BUILD_HEADER, formatClientBuild } from "@rakazo/contracts";
-import { displayIdentityEvent, displayIdentityResult } from "@rakazo/core";
+import {
+  aiConsentTarget,
+  aiDataUsesForProcedure,
+  displayIdentityEvent,
+  displayIdentityResult,
+} from "@rakazo/core";
 import { clientCorrelationHeaders, responseCorrelation } from "@rakazo/logging/monitoring";
 import { authClient } from "./auth";
+import {
+  ensureCapacitorAiConsent,
+  isCapacitorNative,
+} from "./capacitor-ai-consent";
 import { CLIENT_BUILD } from "./client-build";
 import { i18n } from "./i18n";
 import { identityLabels } from "./identity-display";
@@ -156,8 +165,24 @@ export type RpcClient = ContractRouterClient<AppContract, RpcClientContext>;
 const displayLink = {
   call: async (...args: Parameters<typeof link.call>) => {
     const [path, input, options] = args;
+    const procedure = path.join("/");
+    if (isCapacitorNative() && path[0] !== "aiConsent") {
+      const uses = aiDataUsesForProcedure(procedure, input);
+      if (uses.length > 0) {
+        const spaceId =
+          options?.context?.spaceId === undefined ? selectedSpaceId() : options.context.spaceId;
+        const target = aiConsentTarget(input);
+        await ensureCapacitorAiConsent({
+          uses,
+          target,
+          spaceId,
+          status: (query) => rpc.aiConsent.status(query, { context: { spaceId } }),
+          allow: (allowInput) => rpc.aiConsent.allow(allowInput, { context: { spaceId } }),
+        });
+      }
+    }
     const result = await link.call(path, input, options);
-    if (path.join("/") === "threads/subscribe") {
+    if (procedure === "threads/subscribe") {
       return (async function* () {
         for await (const event of result as AsyncIterable<ProductEvent>) {
           yield displayIdentityEvent(event, identityLabels());

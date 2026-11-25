@@ -1262,6 +1262,10 @@ msgstr "Acronyms, product names and how to spell them"
 msgid "Action"
 msgstr "Action"
 
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Action needed"
+msgstr "Action needed"
+
 #. placeholder {0}: bot.name
 #. placeholder {0}: file.path
 #. placeholder {0}: group.spaceName
@@ -1806,6 +1810,14 @@ msgstr "Agents with their own computer and browser"
 msgid "AI"
 msgstr "AI"
 
+#: src/components/AiDataSharingSettings.tsx
+msgid "AI data sharing"
+msgstr "AI data sharing"
+
+#: src/components/AiDataSharingSettings.tsx
+msgid "AI models"
+msgstr "AI models"
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "AI safeguards"
@@ -1917,9 +1929,15 @@ msgstr "All tools"
 msgid "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
 msgstr "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
 
+#: src/components/AiConsentDialog.tsx
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Allow"
+
+#. placeholder {0}: recipient.name
+#: src/components/AiDataSharingSettings.tsx
+msgid "Allow {0} on mobile"
+msgstr "Allow {0} on mobile"
 
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Allow all active line managers in Evolve."
@@ -2754,6 +2772,10 @@ msgstr "Block"
 msgid "Blocked"
 msgstr "Blocked"
 
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Blocked in system settings"
+msgstr "Blocked in system settings"
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -2783,6 +2805,10 @@ msgstr "Booting live desktop…"
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Borders"
 msgstr "Borders"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Bot updates"
+msgstr "Bot updates"
 
 #: src/components/SignupSurvey.tsx
 msgid "Both"
@@ -2988,6 +3014,7 @@ msgstr "Can't reach the server."
 msgid "Can't read images"
 msgstr "Can't read images"
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/components/apps/AppDataPanel.tsx
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
@@ -3224,6 +3251,10 @@ msgstr "Changes take effect within a few seconds. A switch that is on can be lim
 msgid "Changing…"
 msgstr "Changing…"
 
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Channels"
+msgstr "Channels"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "characters"
 msgstr "characters"
@@ -3419,6 +3450,10 @@ msgstr "Choose an agent shape, color, or upload an image"
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
 msgstr "Choose backup"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Choose bots"
+msgstr "Choose bots"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4340,6 +4375,11 @@ msgstr "Continue with {0}"
 msgid "Continue with <0/>"
 msgstr "Continue with <0/>"
 
+#: src/components/AiConsentDialog.tsx
+#: src/components/AiDataSharingSettings.tsx
+msgid "Conversation summaries, memories, searches and agent and Space IDs are sent to store and recall context."
+msgstr "Conversation summaries, memories, searches and agent and Space IDs are sent to store and recall context."
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
 msgstr "Conversations"
@@ -4555,6 +4595,7 @@ msgstr "Could not connect to the computer screen"
 #: src/components/PasskeySettings.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
 #: src/lib/account-security.ts
+#: src/lib/dictation.ts
 #: src/lib/sso-flow.ts
 #: src/lib/user-error.ts
 #: src/pages/Auth.tsx
@@ -4793,6 +4834,10 @@ msgstr "Could not load model settings"
 #: src/components/GroupPeople.tsx
 msgid "Could not load people"
 msgstr "Could not load people"
+
+#: src/components/AiDataSharingSettings.tsx
+msgid "Could not load permissions."
+msgstr "Could not load permissions."
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
@@ -5251,6 +5296,10 @@ msgstr "Could not update computer access"
 msgid "Could not update name"
 msgstr "Could not update name"
 
+#: src/components/AiDataSharingSettings.tsx
+msgid "Could not update permissions."
+msgstr "Could not update permissions."
+
 #: src/pages/shell/use-composer-actions.ts
 msgid "Could not update reaction"
 msgstr "Could not update reaction"
@@ -5380,6 +5429,10 @@ msgstr "Couldn't load grants"
 msgid "Couldn't load messaging settings"
 msgstr "Couldn't load messaging settings"
 
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Couldn't load notification settings"
+msgstr "Couldn't load notification settings"
+
 #: src/components/office/planner/EvolveJobLink.tsx
 msgid "Couldn't load projects."
 msgstr "Couldn't load projects."
@@ -5485,9 +5538,17 @@ msgstr "Couldn't undo that change."
 msgid "Couldn't update agent style"
 msgstr "Couldn't update agent style"
 
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Couldn't update bot notifications"
+msgstr "Couldn't update bot notifications"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't update messaging settings"
 msgstr "Couldn't update messaging settings"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Couldn't update notification settings"
+msgstr "Couldn't update notification settings"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update your timezone"
@@ -6915,6 +6976,10 @@ msgstr "Enable {0}"
 msgid "Enable knowledge file search"
 msgstr "Enable knowledge file search"
 
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Enable notifications"
+msgstr "Enable notifications"
+
 #: src/components/office/slides/Presenter.tsx
 msgid "End of slideshow. Click to exit."
 msgstr "End of slideshow. Click to exit."
@@ -7936,12 +8001,8 @@ msgid "Get its own icon and window, and open it straight from your desktop."
 msgstr "Get its own icon and window, and open it straight from your desktop."
 
 #: src/components/EnableNotificationsDialog.tsx
-msgid "Get notified when your work finishes or an agent needs your input — even when the app is in the background."
-msgstr "Get notified when your work finishes or an agent needs your input — even when the app is in the background."
-
-#: src/components/EnableNotificationsDialog.tsx
-msgid "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
-msgstr "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
+msgid "Get notified when a bot needs you or finishes important work."
+msgstr "Get notified when a bot needs you or finishes important work."
 
 #: src/components/office/StudioWelcome.tsx
 #: src/components/studio/FeatureStudioWelcome.tsx
@@ -8504,6 +8565,10 @@ msgstr "In their own private chat, assistants prepare Outlook emails and replies
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this agent"
 msgstr "In this agent"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "In-app notifications"
+msgstr "In-app notifications"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
@@ -9384,6 +9449,7 @@ msgstr "Loading video…"
 msgid "Loading voice providers…"
 msgstr "Loading voice providers…"
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/office/DocumentLoadPanel.tsx
@@ -9736,6 +9802,7 @@ msgstr "Members link Slack, Telegram and other chat apps to their assistants."
 msgid "Members use it with the voice you picked, and their use is billed to this connection's account."
 msgstr "Members use it with the voice you picked, and their use is billed to this connection's account."
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/components/EmailFilingCard.tsx
 #: src/pages/AdminInfrastructure.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -9836,6 +9903,11 @@ msgstr "Message…"
 #: src/pages/shell/message-view.tsx
 msgid "Messaged {peer}"
 msgstr "Messaged {peer}"
+
+#: src/components/AiConsentDialog.tsx
+#: src/components/AiDataSharingSettings.tsx
+msgid "Messages, chat history, agent instructions, memories, attachments, screenshots and connected-app content are sent to run your agents, including routines."
+msgstr "Messages, chat history, agent instructions, memories, attachments, screenshots and connected-app content are sent to run your agents, including routines."
 
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
@@ -10467,6 +10539,10 @@ msgstr "New login"
 msgid "New messages"
 msgstr "New messages"
 
+#: src/components/AiDataSharingSettings.tsx
+msgid "New mobile actions won't send data to these services. Runs already in progress and routines keep going until you stop them."
+msgstr "New mobile actions won't send data to these services. Runs already in progress and routines keep going until you stop them."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "New note"
 msgstr "New note"
@@ -10649,6 +10725,10 @@ msgstr "No agents"
 msgid "No agents match"
 msgstr "No agents match"
 
+#: src/components/AiDataSharingSettings.tsx
+msgid "No AI services configured."
+msgstr "No AI services configured."
+
 #: src/components/pages/PagesList.tsx
 msgid "No apps match “{query}”."
 msgstr "No apps match “{query}”."
@@ -10677,6 +10757,10 @@ msgstr "No authentication"
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "No border"
 msgstr "No border"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "No bots yet"
+msgstr "No bots yet"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "No budget"
@@ -11181,6 +11265,7 @@ msgstr "Not in the plugin catalog"
 msgid "Not linked to Evolve"
 msgstr "Not linked to Evolve"
 
+#: src/components/AiConsentDialog.tsx
 #: src/components/EnableNotificationsDialog.tsx
 #: src/components/GitHubStarPrompt.tsx
 #: src/components/InstallAppBanner.tsx
@@ -11316,9 +11401,19 @@ msgstr "Nothing remembered yet."
 msgid "Nothing sent yet."
 msgstr "Nothing sent yet."
 
+#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "Notifications"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Notify me about"
+msgstr "Notify me about"
+
+#. placeholder {0}: bot.name
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Notify when {0} finishes or needs you"
+msgstr "Notify when {0} finishes or needs you"
 
 #: src/components/studio/StudioActivity.tsx
 msgid "Now"
@@ -11390,6 +11485,10 @@ msgstr "OCSC decks with an infographic on most slides, real project photos and a
 #: src/pages/PluginsOverlay.tsx
 msgid "OCSC Evolve"
 msgstr "OCSC Evolve"
+
+#: src/components/AiDataSharingSettings.tsx
+msgid "OCSC Intelligence"
+msgstr "OCSC Intelligence"
 
 #: src/components/integrations/integrations-coming-soon.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -11595,6 +11694,7 @@ msgstr "Only you"
 msgid "Only you can see this list. Your assistants can add to it from your emails and chats when you ask them, including in routines."
 msgstr "Only you can see this list. Your assistants can add to it from your emails and chats when you ask them, including in routines."
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/pages/PageCard.tsx
@@ -11685,6 +11785,10 @@ msgstr "Open computer settings"
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Open Data, Code and History when you need the structure, versions or settings behind the UI"
 msgstr "Open Data, Code and History when you need the structure, versions or settings behind the UI"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Open device settings"
+msgstr "Open device settings"
 
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
@@ -12554,6 +12658,18 @@ msgstr "priority {0} → {1}"
 msgid "Priority for {0}"
 msgstr "Priority for {0}"
 
+#: src/components/AiDataSharingSettings.tsx
+msgid "Privacy policies"
+msgstr "Privacy policies"
+
+#: src/components/AiConsentDialog.tsx
+msgid "Privacy policy"
+msgstr "Privacy policy"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Problems"
+msgstr "Problems"
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
 msgstr "Processing references and sending to AI..."
@@ -12675,6 +12791,10 @@ msgstr "Protocol"
 msgid "Provider"
 msgstr "Provider"
 
+#: src/components/AiConsentDialog.tsx
+msgid "Provider privacy policy"
+msgstr "Provider privacy policy"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Providers"
 msgstr "Providers"
@@ -12704,6 +12824,10 @@ msgstr "Published in Evolve"
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
 msgstr "Pull request"
+
+#: src/pages/NotificationsSettingsPanel.tsx
+msgid "Push notifications"
+msgstr "Push notifications"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Put OCSC Intelligence to work"
@@ -13481,6 +13605,7 @@ msgid "Retake quiz"
 msgstr "Retake quiz"
 
 #: src/components/AccountAccess.tsx
+#: src/components/AiDataSharingSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -14540,6 +14665,15 @@ msgstr "Share"
 msgid "Share “{title}”"
 msgstr "Share “{title}”"
 
+#. placeholder {0}: recipient.name
+#: src/components/AiConsentDialog.tsx
+msgid "Share data with {0}?"
+msgstr "Share data with {0}?"
+
+#: src/components/AiConsentDialog.tsx
+msgid "Share data with AI?"
+msgstr "Share data with AI?"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Share it with colleagues so everyone can use what you built"
 msgstr "Share it with colleagues so everyone can use what you built"
@@ -15384,8 +15518,8 @@ msgid "Status for {0}"
 msgstr "Status for {0}"
 
 #: src/components/EnableNotificationsDialog.tsx
-msgid "Stay up to date"
-msgstr "Stay up to date"
+msgid "Stay in the loop"
+msgstr "Stay in the loop"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Step 2 — Describe the edit"
@@ -16866,10 +17000,6 @@ msgstr "Turn off to hide this default agent from staff in Rakazo without deletin
 msgid "Turn on auto-fix"
 msgstr "Turn on auto-fix"
 
-#: src/components/EnableNotificationsDialog.tsx
-msgid "Turn on notifications"
-msgstr "Turn on notifications"
-
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Turn these quantities into a cost plan with a total per trade"
 msgstr "Turn these quantities into a cost plan with a total per trade"
@@ -17153,6 +17283,7 @@ msgstr "Updated to version {flashVersion}"
 msgid "Updated to version {updated}"
 msgstr "Updated to version {updated}"
 
+#: src/pages/NotificationsSettingsPanel.tsx
 #: src/pages/settings-nav.ts
 msgid "Updates"
 msgstr "Updates"
@@ -17532,6 +17663,7 @@ msgstr "View programme JSON"
 msgid "View source"
 msgstr "View source"
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminCompanyVoice.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -17905,9 +18037,18 @@ msgstr "Why"
 msgid "Window"
 msgstr "Window"
 
+#: src/components/AiDataSharingSettings.tsx
 #: src/pages/AdminAnnouncements.tsx
 msgid "Withdraw"
 msgstr "Withdraw"
+
+#: src/components/AiDataSharingSettings.tsx
+msgid "Withdraw all permissions"
+msgstr "Withdraw all permissions"
+
+#: src/components/AiDataSharingSettings.tsx
+msgid "Withdraw all permissions?"
+msgstr "Withdraw all permissions?"
 
 #: src/pages/AdminAnnouncements.tsx
 msgid "Withdrawn"
@@ -18167,6 +18308,10 @@ msgstr "You can select up to {maxPages} pages at a time"
 msgid "You can still open and download PDFs."
 msgstr "You can still open and download PDFs."
 
+#: src/components/AiConsentDialog.tsx
+msgid "You can turn this off in Account → AI data sharing."
+msgstr "You can turn this off in Account → AI data sharing."
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "You declined"
 msgstr "You declined"
@@ -18357,6 +18502,11 @@ msgstr "Your plan becomes {annualPrice} / year when your trial ends."
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "Your plan becomes {tierTargetLabel} when your trial ends."
+
+#: src/components/AiConsentDialog.tsx
+#: src/components/AiDataSharingSettings.tsx
+msgid "Your recordings are sent for transcription, and text you play is sent to generate speech."
+msgstr "Your recordings are sent for transcription, and text you play is sent to generate speech."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Your role, office, team and what you work on"

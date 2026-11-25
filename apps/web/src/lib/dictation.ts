@@ -6,10 +6,11 @@ import {
   speechLocaleTag,
   withAbort,
 } from "@rakazo/core";
+import { ensureCapacitorAiConsent } from "./capacitor-ai-consent.js";
 import { desktopBridge } from "./desktop.js";
 import { DesktopSpeechRecognition } from "./desktop-speech.js";
 import { getActiveUiLocale } from "./i18n.js";
-import { selectedSpaceId, withSpaceHeaders } from "./rpc.js";
+import { rpc, selectedSpaceId, withSpaceHeaders } from "./rpc.js";
 import { errorText, voiceAccountErrorText } from "./user-error.js";
 
 export type DictationMode = "hold" | "endpoint";
@@ -435,6 +436,18 @@ export class Dictation {
     endpointMs: number,
     spaceId: string | null,
   ) {
+    try {
+      await ensureCapacitorAiConsent({
+        uses: ["voice"],
+        spaceId,
+        status: (query) => rpc.aiConsent.status(query, { context: { spaceId } }),
+        allow: (input) => rpc.aiConsent.allow(input, { context: { spaceId } }),
+      });
+    } catch (error) {
+      this.failListening(mine, errorText(error, t`Could not continue`));
+      return;
+    }
+    if (this.token !== mine) return;
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
