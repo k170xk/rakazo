@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { createAdapterContext } from "@rakazo/adapter-kit";
+import type { EvolveContractBundle } from "@rakazo/adapters";
 import {
   buildClauseLibraryMarkdown,
   buildContractAgentInstructions,
   buildContractBriefingText,
-  type EvolveContractBundle,
   fetchEvolveContractBundle,
 } from "@rakazo/adapters";
 import type { DocumentFormat, MessageBlock } from "@rakazo/contracts";
@@ -35,7 +35,10 @@ function contractBotName(bundle: EvolveContractBundle): string {
 
 function sanitizeFileName(raw: string, ext: string): string {
   const base = raw.split(/[\\/]/).pop() ?? "";
-  const cleaned = base.replace(/[\p{Cc}\u2028\u2029]/gu, " ").replace(/\s+/g, " ").trim();
+  const cleaned = base
+    .replace(/[\p{Cc}\u2028\u2029]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const suffix = ext.startsWith(".") ? ext : `.${ext}`;
   const withExt = cleaned.toLowerCase().endsWith(suffix.toLowerCase())
     ? cleaned
@@ -87,7 +90,10 @@ async function storeBotFileIfMissing(
     format: DocumentFormat | null;
     bytes: Uint8Array;
     isPrimary: boolean;
-    existingByHash: Map<string, { id: string; rootArtifactId: string | null; name: string; mimeType: string; size: number }>;
+    existingByHash: Map<
+      string,
+      { id: string; rootArtifactId: string | null; name: string; mimeType: string; size: number }
+    >;
   },
 ): Promise<SyncedArtifact> {
   const hash = createHash("sha256").update(input.bytes).digest("hex");
@@ -205,7 +211,7 @@ export async function openEvolveContract(
     .join(" · ")
     .slice(0, 500);
 
-  let existingBot = await deps.prisma.bot.findFirst({
+  const existingBot = await deps.prisma.bot.findFirst({
     where: { spaceId: actor.spaceId, userId: actor.userId, spawnKey },
     select: { id: true, archivedAt: true, thread: { select: { id: true } } },
   });
@@ -322,25 +328,32 @@ export async function openEvolveContract(
     }
   }
 
-  // Post initial briefing + attached files on first creation, or a concise sync update when new files arrived.
+  // Post initial briefing + attached files on first creation, or a concise sync update when new files or an updated Clause Library arrived.
   const newlySynced = synced.filter((f) => f.isNew);
-  if (threadId && (created || newlySynced.length > 0)) {
+  const clauseLibraryUpdated = Boolean(clauseLibraryArtifact?.isNew);
+  if (threadId && (created || newlySynced.length > 0 || clauseLibraryUpdated)) {
     const filesForMessage = created
       ? [...synced, ...(clauseLibraryArtifact ? [clauseLibraryArtifact] : [])]
       : [
           ...newlySynced,
-          ...(clauseLibraryArtifact?.isNew ? [clauseLibraryArtifact] : []),
+          ...(clauseLibraryUpdated && clauseLibraryArtifact ? [clauseLibraryArtifact] : []),
         ];
+
+    const syncSummary = created
+      ? buildContractBriefingText(
+          bundle,
+          synced.map((f) => f.name),
+        )
+      : newlySynced.length > 0 && clauseLibraryUpdated
+        ? `Synced ${newlySynced.length} newly uploaded contract document${newlySynced.length === 1 ? "" : "s"} and updated OCSC Clause Library (${bundle.clauseLibrary.length} active rule${bundle.clauseLibrary.length === 1 ? "" : "s"}) from Evolve:`
+        : newlySynced.length > 0
+          ? `Synced ${newlySynced.length} newly uploaded contract document${newlySynced.length === 1 ? "" : "s"} from Evolve:`
+          : `Synced updated OCSC Clause Library (${bundle.clauseLibrary.length} active rule${bundle.clauseLibrary.length === 1 ? "" : "s"}) from Evolve:`;
 
     const blocks: MessageBlock[] = [
       {
         kind: "text",
-        text: created
-          ? buildContractBriefingText(
-              bundle,
-              synced.map((f) => f.name),
-            )
-          : `Synced ${newlySynced.length} newly uploaded contract document${newlySynced.length === 1 ? "" : "s"} from Evolve:`,
+        text: syncSummary,
       },
       ...filesForMessage.map(
         (f): MessageBlock => ({
