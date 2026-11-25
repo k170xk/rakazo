@@ -41,6 +41,14 @@ EXPO_ACCESS_TOKEN=replace-with-your-expo-access-token
 Leave it unset when enhanced security is off. A missing or revoked token fails the push with an
 error that names `EXPO_ACCESS_TOKEN`; the token itself is never logged.
 
+### Capacitor iOS App Store preflight
+
+Before submitting the Capacitor iOS shell, follow
+[`docs/ocsc-app-ios-store-preflight.md`](./ocsc-app-ios-store-preflight.md) and the review-notes
+draft in [`docs/ocsc-app-ios-review-notes.md`](./ocsc-app-ios-review-notes.md). The binary must
+include `PrivacyInfo.xcprivacy`, and App Review still needs a durable demo account plus a
+Capacitor AI data-sharing consent path (or the Expo client that already has one).
+
 ### Capacitor shell push
 
 The Capacitor iOS/Android shell can also receive completion and approval pushes through OneSignal,
@@ -62,8 +70,8 @@ VITE_PUSH_APP_ID=replace-with-onesignal-app-id
 Leave them unset when the Capacitor shell is not used. Never commit `ONESIGNAL_REST_API_KEY`,
 APNs `.p8` keys, or Android `google-services.json`. Place `google-services.json` only under
 `ocsc-app/android/app/` on build machines. For iOS, enable Push Notifications on the App ID,
-upload APNs credentials in the OneSignal dashboard, and set `aps-environment` to `production`
-for TestFlight/App Store builds (the checked-in entitlement defaults to `development`).
+upload APNs credentials in the OneSignal dashboard, and keep `aps-environment` as `production`
+for TestFlight/App Store builds (the checked-in entitlement already uses `production`).
 
 Verify on physical devices: sign in on the Capacitor app, confirm the user appears under
 OneSignal → Audience with the account id as External ID, send a dashboard test push, then

@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "description": "iOS and Android app for OCSC Intelligence, showing computer.ocsc.me in a native shell.",
   "scripts": {
-    "sync": "cap sync",
+    "sync": "NODE_OPTIONS='--experimental-strip-types' cap sync",
     "icons": "capacitor-assets generate --ios --android --iconBackgroundColor '#141414' --iconBackgroundColorDark '#141414' --splashBackgroundColor '#141414' --splashBackgroundColorDark '#141414'",
-    "ios": "cap open ios",
-    "android": "cap open android"
+    "ios": "NODE_OPTIONS='--experimental-strip-types' cap open ios",
+    "android": "NODE_OPTIONS='--experimental-strip-types' cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
