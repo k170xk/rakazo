@@ -13,7 +13,7 @@ const OPEN_PUSH_CHAT_EVENT = "rakazo:open-push-chat";
 type CapacitorBridge = {
   isNativePlatform?: () => boolean;
   isPluginAvailable?: (name: string) => boolean;
-  registerPlugin?: (name: string) => NativePushPlugin;
+  Plugins?: Record<string, NativePushPlugin | undefined>;
 };
 
 type NativePushPlugin = {
@@ -46,6 +46,7 @@ export type NativePushChatTarget = {
 
 let plugin: NativePushPlugin | undefined;
 let initializedAppId: string | undefined;
+let initPromise: Promise<NativePushPlugin | undefined> | undefined;
 let boundUserId: string | null = null;
 let clickListenerInstalled = false;
 let pendingTarget: NativePushChatTarget | null = null;
@@ -77,9 +78,9 @@ function pushAppId(): string | undefined {
 function nativePlugin(): NativePushPlugin | undefined {
   if (plugin) return plugin;
   if (!nativePushAvailable()) return undefined;
-  const cap = capacitor();
-  if (!cap?.registerPlugin) return undefined;
-  plugin = cap.registerPlugin(PLUGIN);
+  const resolved = capacitor()?.Plugins?.[PLUGIN];
+  if (!resolved) return undefined;
+  plugin = resolved;
   return plugin;
 }
 
@@ -89,9 +90,20 @@ async function ensureInitialized(): Promise<NativePushPlugin | undefined> {
   const appId = pushAppId();
   if (!appId) return undefined;
   if (initializedAppId === appId) return native;
-  await native.initialize({ appId });
-  initializedAppId = appId;
-  return native;
+  if (!initPromise) {
+    initPromise = native
+      .initialize({ appId })
+      .then(() => {
+        initializedAppId = appId;
+        initPromise = undefined;
+        return native;
+      })
+      .catch((error) => {
+        initPromise = undefined;
+        throw error;
+      });
+  }
+  return initPromise;
 }
 
 /**
@@ -157,7 +169,13 @@ export async function nativePushPermissionState(): Promise<"default" | "granted"
   if (!native) return "default";
   try {
     const coded = permissionFromNativeCode((await native.permissionNative?.())?.permission);
-    if (coded) return coded;
+    if (coded === "granted" || coded === "default") return coded;
+    if (coded === "denied") {
+      // Android's permissionNative() only reports authorised (2) or denied (1), even before
+      // the person has been prompted. canRequestPermission() distinguishes not-yet-asked.
+      if ((await native.canRequestPermission?.())?.canRequest === true) return "default";
+      return "denied";
+    }
     if ((await native.getPermission?.())?.permission) return "granted";
     // `canRequest === false` is also what the plugin reports before it has read the
     // system status. That is not a denial, and hiding the invitation on it means the
@@ -299,6 +317,7 @@ export function setNativePushAppIdForTest(appId: string | undefined) {
 export function resetNativePushForTest() {
   plugin = undefined;
   initializedAppId = undefined;
+  initPromise = undefined;
   boundUserId = null;
   clickListenerInstalled = false;
   pendingTarget = null;

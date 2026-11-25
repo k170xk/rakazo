@@ -4,6 +4,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { EnableNotificationsDialog } from "./EnableNotificationsDialog";
+import { resetNativePushForTest, setNativePushAppIdForTest } from "../lib/capacitor-push";
 
 const lingui = vi.hoisted(() => ({
   Trans: ({ children, message, id }: { children?: ReactNode; message?: string; id?: string }) => (
@@ -102,6 +103,8 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  resetNativePushForTest();
+  Reflect.deleteProperty(globalThis, "Capacitor");
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -165,4 +168,44 @@ it("does not open when permission is already decided", async () => {
     vi.advanceTimersByTime(1_200);
   });
   expect(host.querySelector('[data-testid="enable-notifications-dialog"]')).toBeNull();
+});
+
+it("prompts via Capacitor.Plugins.OneSignalCapacitor and binds the user on Allow", async () => {
+  vi.stubGlobal("Notification", undefined);
+  setNativePushAppIdForTest("app-public");
+  const initialize = vi.fn(async () => undefined);
+  const permissionNative = vi.fn(async () => ({ permission: 0 }));
+  const requestPermission = vi.fn(async () => ({ permission: true }));
+  const login = vi.fn(async () => undefined);
+  (globalThis as { Capacitor?: unknown }).Capacitor = {
+    isNativePlatform: () => true,
+    isPluginAvailable: (name: string) => name === "OneSignalCapacitor",
+    Plugins: {
+      OneSignalCapacitor: {
+        initialize,
+        permissionNative,
+        requestPermission,
+        login,
+      },
+    },
+  };
+
+  await act(async () => root.render(<EnableNotificationsDialog userId="user-1" ready />));
+  await act(async () => {
+    vi.advanceTimersByTime(1_200);
+  });
+
+  const enable = host.querySelector(
+    '[data-testid="enable-notifications-enable"]',
+  ) as HTMLButtonElement | null;
+  expect(enable).not.toBeNull();
+
+  await act(async () => enable?.click());
+  await act(async () => undefined);
+
+  expect(initialize).toHaveBeenCalledTimes(1);
+  expect(initialize).toHaveBeenCalledWith({ appId: "app-public" });
+  expect(permissionNative).toHaveBeenCalled();
+  expect(requestPermission).toHaveBeenCalledWith({ fallbackToSettings: false });
+  expect(login).toHaveBeenCalledWith({ externalId: "user-1" });
 });

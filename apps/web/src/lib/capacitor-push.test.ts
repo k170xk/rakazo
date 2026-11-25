@@ -7,6 +7,7 @@ import {
   nativePushOpenTarget,
   nativePushPermissionState,
   openNativePushChat,
+  requestNativePushPermission,
   resetNativePushForTest,
   setNativePushAppIdForTest,
   subscribeOpenPushChat,
@@ -20,13 +21,13 @@ afterEach(() => {
 });
 
 function installCapacitor(plugin: Record<string, unknown>) {
-  const registerPlugin = vi.fn(() => plugin);
   (globalThis as { Capacitor?: unknown }).Capacitor = {
     isNativePlatform: () => true,
     isPluginAvailable: (name: string) => name === "OneSignalCapacitor",
-    registerPlugin,
+    Plugins: {
+      OneSignalCapacitor: plugin,
+    },
   };
-  return registerPlugin;
 }
 
 describe("native push routing", () => {
@@ -164,14 +165,39 @@ describe("native push routing", () => {
     await expect(nativePushPermissionState()).resolves.toBe("default");
   });
 
-  it("reports an OS denial only from the native status code", async () => {
+  it("reports an OS denial only from the native status code when prompting is no longer possible", async () => {
     setNativePushAppIdForTest("app-public");
     installCapacitor({
       initialize: vi.fn(async () => undefined),
       getPermission: vi.fn(async () => ({ permission: false })),
       permissionNative: vi.fn(async () => ({ permission: 1 })),
+      canRequestPermission: vi.fn(async () => ({ canRequest: false })),
     });
     await expect(nativePushPermissionState()).resolves.toBe("denied");
+  });
+
+  it("treats Android's pre-prompt denied code as default while canRequestPermission is true", async () => {
+    setNativePushAppIdForTest("app-public");
+    installCapacitor({
+      initialize: vi.fn(async () => undefined),
+      getPermission: vi.fn(async () => ({ permission: false })),
+      permissionNative: vi.fn(async () => ({ permission: 1 })),
+      canRequestPermission: vi.fn(async () => ({ canRequest: true })),
+    });
+    await expect(nativePushPermissionState()).resolves.toBe("default");
+  });
+
+  it("requests native push permission through Capacitor.Plugins.OneSignalCapacitor", async () => {
+    setNativePushAppIdForTest("app-public");
+    const initialize = vi.fn(async () => undefined);
+    const requestPermission = vi.fn(async () => ({ permission: true }));
+    installCapacitor({
+      initialize,
+      requestPermission,
+    });
+    await expect(requestNativePushPermission()).resolves.toBe(true);
+    expect(initialize).toHaveBeenCalledWith({ appId: "app-public" });
+    expect(requestPermission).toHaveBeenCalledWith({ fallbackToSettings: false });
   });
 
   it("reports granted from an authorised native status", async () => {
