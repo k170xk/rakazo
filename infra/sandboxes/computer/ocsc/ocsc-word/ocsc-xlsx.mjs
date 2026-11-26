@@ -28,6 +28,7 @@ import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { expandSharedFormulas, finishWorkbook, sanitizeWorkbookXml } from "./excel-workbook.mjs";
 import { applyExcelFormat, cellRange, colourOrThrow, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
+import { findSmartMatches } from "./ooxml-safe.mjs";
 import { cellText, evaluateFormulas, showOnScreen } from "./screen.mjs";
 
 const WORKSPACE =
@@ -131,8 +132,8 @@ function lostWarning(lost) {
 
 function outFile(p) {
   const out = inWorkspace(p, "--out");
-  if (!/\.xlsx$/i.test(out.full))
-    throw new UsageError("--out must end in .xlsx");
+  if (!/\.xls[xm]$/i.test(out.full))
+    throw new UsageError("--out must end in .xlsx or .xlsm");
   mkdirSync(dirname(out.full), { recursive: true });
   return out;
 }
@@ -292,53 +293,173 @@ function fillSheet(sheet, spec, where) {
 const REF =
   /(?<![A-Za-z0-9_!$.:])(\$?[A-Za-z]{1,3}\$?)(\d+)(?::(\$?[A-Za-z]{1,3}\$?)(\d+))?(?![\d(A-Za-z_])/g;
 
+function sheetPrefixRegex(sheetName) {
+  const escaped = sheetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const quotedEscaped = sheetName.replace(/'/g, "''").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(
+    `((?:'${quotedEscaped}'|(?<![A-Za-z0-9_.])${escaped})!)(\\$?[A-Za-z]{1,3}\\$?)(\\d+)(?::(\\$?[A-Za-z]{1,3}\\$?)(\\d+))?(?![\\d(A-Za-z_])`,
+    "g",
+  );
+}
+
+function colRefToNumber(colRef) {
+  return colRef
+    .replace(/\$/g, "")
+    .toUpperCase()
+    .split("")
+    .reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+}
+
+function formatColRef(colRef, newColNum) {
+  const lead = colRef.startsWith("$") ? "$" : "";
+  const trail = colRef.endsWith("$") ? "$" : "";
+  return `${lead}${columnLetter(newColNum)}${trail}`;
+}
+
 /**
- * Keep this sheet's formulas pointing at the same cells after rows move, as Excel does. A range
- * ending just above inserted rows grows over them when the formula sits below them, which is a total
- * picking up the line items added above it. Returns how many references now point at removed rows.
+ * Keep formulas pointing at the same cells after rows move, on BOTH the edited sheet and any
+ * other sheets referencing it (e.g. `Summary!B5` or `'Cost Plan'!D2:D50`).
  */
-function shiftRows(sheet, { at, inserted = 0, removed = 0 }) {
+function shiftRows(sheet, { at, inserted = 0, removed = 0 }, book = null) {
   let broken = 0;
   const moveRow = (r) => {
     if (inserted) return r >= at ? r + inserted : r;
     if (r >= at + removed) return r - removed;
     return r >= at ? null : r;
   };
+  const rewriteRef = (prefix, c1, r1, c2, r2, rowNum, sameSheet) => {
+    const a = Number(r1);
+    if (c2 === undefined) {
+      const moved = moveRow(a);
+      if (moved === null) {
+        broken += 1;
+        return "#REF!";
+      }
+      return `${prefix}${c1}${moved}`;
+    }
+    const b = Number(r2);
+    let start = moveRow(a);
+    let end = moveRow(b);
+    if (inserted && b === at - 1 && (!sameSheet || rowNum >= at + inserted)) {
+      end = b + inserted;
+    }
+    if (removed) {
+      start ??= at;
+      end ??= at - 1;
+      if (start > end) {
+        broken += 1;
+        return "#REF!";
+      }
+    }
+    return `${prefix}${c1}${start}:${c2}${end}`;
+  };
   sheet.eachRow({ includeEmpty: false }, (row) => {
     if (inserted && row.number >= at && row.number < at + inserted) return;
     row.eachCell({ includeEmpty: false }, (cell) => {
       const v = cell.value;
       if (!v || typeof v !== "object" || typeof v.formula !== "string") return;
-      const formula = v.formula.replace(REF, (_, c1, r1, c2, r2) => {
-        const a = Number(r1);
-        if (c2 === undefined) {
-          const moved = moveRow(a);
-          if (moved === null) {
-            broken += 1;
-            return "#REF!";
-          }
-          return `${c1}${moved}`;
-        }
-        const b = Number(r2);
-        let start = moveRow(a);
-        let end = moveRow(b);
-        if (inserted && b === at - 1 && row.number >= at + inserted) {
-          end = b + inserted;
-        }
-        if (removed) {
-          start ??= at;
-          end ??= at - 1;
-          if (start > end) {
-            broken += 1;
-            return "#REF!";
-          }
-        }
-        return `${c1}${start}:${c2}${end}`;
-      });
+      const formula = v.formula.replace(REF, (_, c1, r1, c2, r2) =>
+        rewriteRef("", c1, r1, c2, r2, row.number, true),
+      );
       cell.value = { formula };
     });
   });
+  if (book) {
+    const crossRe = sheetPrefixRegex(sheet.name);
+    for (const other of book.worksheets) {
+      if (other === sheet) continue;
+      other.eachRow({ includeEmpty: false }, (row) => {
+        row.eachCell({ includeEmpty: false }, (cell) => {
+          const v = cell.value;
+          if (!v || typeof v !== "object" || typeof v.formula !== "string") return;
+          const formula = v.formula.replace(crossRe, (_, prefix, c1, r1, c2, r2) =>
+            rewriteRef(prefix, c1, r1, c2, r2, row.number, false),
+          );
+          if (formula !== v.formula) cell.value = { formula };
+        });
+      });
+    }
+  }
   return broken;
+}
+
+/** Shifts column references in formulas (same-sheet and cross-sheet) when columns are inserted or deleted. */
+function shiftColumns(sheet, { at, inserted = 0, removed = 0 }, book = null) {
+  let broken = 0;
+  const moveCol = (c) => {
+    if (inserted) return c >= at ? c + inserted : c;
+    if (c >= at + removed) return c - removed;
+    return c >= at ? null : c;
+  };
+  const rewriteRef = (prefix, c1, r1, c2, r2) => {
+    const a = colRefToNumber(c1);
+    if (c2 === undefined) {
+      const moved = moveCol(a);
+      if (moved === null) {
+        broken += 1;
+        return "#REF!";
+      }
+      return `${prefix}${formatColRef(c1, moved)}${r1}`;
+    }
+    const b = colRefToNumber(c2);
+    let start = moveCol(a);
+    let end = moveCol(b);
+    if (removed) {
+      start ??= at;
+      end ??= at - 1;
+      if (start > end) {
+        broken += 1;
+        return "#REF!";
+      }
+    }
+    return `${prefix}${formatColRef(c1, start)}${r1}:${formatColRef(c2, end)}${r2}`;
+  };
+  sheet.eachRow({ includeEmpty: false }, (row) => {
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      const v = cell.value;
+      if (!v || typeof v !== "object" || typeof v.formula !== "string") return;
+      const formula = v.formula.replace(REF, (_, c1, r1, c2, r2) =>
+        rewriteRef("", c1, r1, c2, r2),
+      );
+      if (formula !== v.formula) cell.value = { formula };
+    });
+  });
+  if (book) {
+    const crossRe = sheetPrefixRegex(sheet.name);
+    for (const other of book.worksheets) {
+      if (other === sheet) continue;
+      other.eachRow({ includeEmpty: false }, (row) => {
+        row.eachCell({ includeEmpty: false }, (cell) => {
+          const v = cell.value;
+          if (!v || typeof v !== "object" || typeof v.formula !== "string") return;
+          const formula = v.formula.replace(crossRe, (_, prefix, c1, r1, c2, r2) =>
+            rewriteRef(prefix, c1, r1, c2, r2),
+          );
+          if (formula !== v.formula) cell.value = { formula };
+        });
+      });
+    }
+  }
+  return broken;
+}
+
+/** Updates cross-sheet formula references across the workbook when a sheet is renamed. */
+function renameSheetInFormulas(book, oldName, newName) {
+  const escaped = oldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const quotedEscaped = oldName.replace(/'/g, "''").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const needsQuotes = /[^A-Za-z0-9_.]|^\d/.test(newName);
+  const replacement = needsQuotes ? `'${newName.replace(/'/g, "''")}'!` : `${newName}!`;
+  const re = new RegExp(`(?:'${quotedEscaped}'|(?<![A-Za-z0-9_.])${escaped})!`, "g");
+  for (const ws of book.worksheets) {
+    ws.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        const v = cell.value;
+        if (!v || typeof v !== "object" || typeof v.formula !== "string") return;
+        const formula = v.formula.replace(re, replacement);
+        if (formula !== v.formula) cell.value = { formula };
+      });
+    });
+  }
 }
 
 /**
@@ -482,6 +603,38 @@ async function cmdRead(o) {
   evaluateFormulas(book, { shared: true });
   const named = o.sheet !== undefined && o.sheet !== true;
   const wanted = named ? [sheetOf(book, o.sheet, "--sheet")] : book.worksheets;
+  if (typeof o.find === "string" && o.find.trim()) {
+    const query = o.find.trim();
+    const matches = [];
+    for (const sheet of wanted) {
+      sheet.eachRow({ includeEmpty: false }, (row) => {
+        row.eachCell({ includeEmpty: false }, (cell) => {
+          if (cell.isMerged && cell.master !== cell) return;
+          const shown = cellText(cell);
+          const formula = formulaOf(cell);
+          const hay = formula ? `${shown} =${formula}` : shown;
+          if (!findSmartMatches(hay, query, { all: false, caseInsensitive: true }).length) return;
+          if (matches.length < 150) {
+            matches.push({
+              sheet: sheet.name,
+              cell: `${columnName(cell.col)}${row.number}`,
+              row: row.number,
+              value: formula ? `=${formula}${shown ? ` → ${shown}` : ""}` : shown,
+            });
+          }
+        });
+      });
+    }
+    return {
+      ok: true,
+      file: src.rel,
+      find: query,
+      workbook: book.worksheets.map((s) => `${s.name} (${s.rowCount} rows x ${s.columnCount} columns)`),
+      matches,
+      ...(matches.length >= 150 ? { note: "Showing first 150 matches. Pass --sheet or a narrower --find phrase." } : {}),
+      ...(lost.length ? { warning: lostWarning(lost) } : {}),
+    };
+  }
   let budget = READ_BUDGET;
   const sheets = [];
   const unread = [];
@@ -559,8 +712,14 @@ async function cmdEdit(o) {
       case "set": {
         const sheet = sheetOf(book, e.sheet, where);
         const { col, row } = address(e.cell, where);
-        setCell(sheet.getRow(row).getCell(col), e.value, e.format, where);
-        report.push(`${sheet.name}!${e.cell} set`);
+        const rawCell = sheet.getRow(row).getCell(col);
+        const target = rawCell.isMerged && rawCell.master ? rawCell.master : rawCell;
+        setCell(target, e.value, e.format, where);
+        report.push(
+          target !== rawCell
+            ? `${sheet.name}!${target.address} set (merged with ${e.cell})`
+            : `${sheet.name}!${e.cell} set`,
+        );
         break;
       }
       case "set_range": {
@@ -619,14 +778,14 @@ async function cmdEdit(o) {
           inserted.map(() => []),
           "i",
         );
-        shiftRows(sheet, { at: e.at, inserted: inserted.length });
+        shiftRows(sheet, { at: e.at, inserted: inserted.length }, book);
         inserted.forEach((values, r) => {
           values.forEach((v, c) => {
             setCell(sheet.getRow(e.at + r).getCell(c + 1), v, e.format, where);
           });
         });
         report.push(
-          `${sheet.name}: ${inserted.length} row(s) inserted at row ${e.at}; formulas below were moved and totals ending just above now include them.`,
+          `${sheet.name}: ${inserted.length} row(s) inserted at row ${e.at}; formulas below and on other sheets were updated.`,
         );
         break;
       }
@@ -637,7 +796,7 @@ async function cmdEdit(o) {
           throw new UsageError(`${where}: from must be a row number.`);
         const count = Number.isInteger(e.count) && e.count > 0 ? e.count : 1;
         sheet.spliceRows(e.from, count);
-        const broken = shiftRows(sheet, { at: e.from, removed: count });
+        const broken = shiftRows(sheet, { at: e.from, removed: count }, book);
         report.push(
           `${sheet.name}: ${count} row(s) removed from row ${e.from}${broken ? `; ${broken} formula(s) referred to a removed cell and now show #REF!` : ""}.`,
         );
@@ -668,8 +827,10 @@ async function cmdEdit(o) {
         const sheet = sheetOf(book, e.sheet, where);
         const name = String(e.name || "").slice(0, 31);
         if (!name) throw new UsageError(`${where}: name is required.`);
-        report.push(`sheet ${sheet.name} renamed to ${name}`);
+        const oldName = sheet.name;
         sheet.name = name;
+        renameSheetInFormulas(book, oldName, name);
+        report.push(`sheet ${oldName} renamed to ${name}`);
         break;
       }
       case "format_cells": {
@@ -748,8 +909,13 @@ async function cmdEdit(o) {
         const sheet = sheetOf(book, e.sheet, where);
         const at = columnIndex(e.at ?? e.column, where);
         const count = Number.isInteger(e.count) && e.count > 0 ? e.count : 1;
-        if (e.op === "insert_columns") sheet.spliceColumns(at, 0, ...Array.from({ length: count }, () => []));
-        else sheet.spliceColumns(at, count);
+        if (e.op === "insert_columns") {
+          sheet.spliceColumns(at, 0, ...Array.from({ length: count }, () => []));
+          shiftColumns(sheet, { at, inserted: count }, book);
+        } else {
+          sheet.spliceColumns(at, count);
+          shiftColumns(sheet, { at, removed: count }, book);
+        }
         report.push(
           `${sheet.name}: ${count} column(s) ${e.op === "insert_columns" ? "inserted at" : "removed from"} ${columnLetter(at)}`,
         );
@@ -848,11 +1014,15 @@ async function cmdEdit(o) {
           rule = { type: "dataBar", cfvo: [{ type: "min" }, { type: "max" }], color: { argb: fill } };
         } else if (kind === "contains") {
           const text = String(e.value ?? "").replace(/"/g, '""');
+          const parsedArea = cellRange(area);
+          const topLeft = parsedArea
+            ? `${columnLetter(Math.min(parsedArea.c1, parsedArea.c2))}${Math.min(parsedArea.r1, parsedArea.r2)}`
+            : "A1";
           rule = {
             type: "containsText",
             operator: "containsText",
             text: String(e.value ?? ""),
-            formulae: [`NOT(ISERROR(SEARCH("${text}",A1)))`],
+            formulae: [`NOT(ISERROR(SEARCH("${text}",${topLeft})))`],
             style: paint,
           };
         } else {
@@ -886,9 +1056,127 @@ async function cmdEdit(o) {
         report.push(`${sheet.name} tab recoloured`);
         break;
       }
+      case "find_replace":
+      case "replace_text": {
+        const find = String(e.find ?? "");
+        if (!find) throw new UsageError(`${where}: find is required.`);
+        const replace = String(e.replace ?? "");
+        const replaceAll = e.all !== false;
+        const caseInsensitive = e.match_case !== true;
+        const sheets = e.sheet !== undefined ? [sheetOf(book, e.sheet, where)] : book.worksheets;
+        let replacedCells = 0;
+        for (const ws of sheets) {
+          ws.eachRow({ includeEmpty: false }, (row) => {
+            row.eachCell({ includeEmpty: false }, (cell) => {
+              if (!replaceAll && replacedCells > 0) return;
+              if (cell.isMerged && cell.master !== cell) return;
+              const v = cell.value;
+              if (typeof v === "string") {
+                const hits = findSmartMatches(v, find, { all: replaceAll, caseInsensitive });
+                if (!hits.length) return;
+                let out = v;
+                for (let i = hits.length - 1; i >= 0; i -= 1) {
+                  out = out.slice(0, hits[i].start) + replace + out.slice(hits[i].end);
+                }
+                cell.value = out;
+                replacedCells += 1;
+              } else if (v && typeof v === "object" && Array.isArray(v.richText)) {
+                const joined = v.richText.map((part) => String(part.text ?? "")).join("");
+                const hits = findSmartMatches(joined, find, { all: replaceAll, caseInsensitive });
+                if (!hits.length) return;
+                let out = joined;
+                for (let i = hits.length - 1; i >= 0; i -= 1) {
+                  out = out.slice(0, hits[i].start) + replace + out.slice(hits[i].end);
+                }
+                cell.value = out;
+                replacedCells += 1;
+              }
+            });
+          });
+        }
+        if (!replacedCells) {
+          throw new UsageError(
+            `${where}: ${JSON.stringify(find)} was not found${e.sheet ? ` on sheet ${JSON.stringify(e.sheet)}` : ""}. Run ocsc-xlsx read --find to check exact cell text.`,
+          );
+        }
+        report.push(`Replaced "${find}" with "${replace}" in ${replacedCells} cell(s)`);
+        break;
+      }
+      case "clear":
+      case "clear_range": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const area = cellRange(e.range || e.cell);
+        if (!area)
+          throw new UsageError(`${where}: range must be a cell like "B4" or a block like "A5:F20".`);
+        let n = 0;
+        for (let r = Math.min(area.r1, area.r2); r <= Math.max(area.r1, area.r2); r += 1) {
+          for (let c = Math.min(area.c1, area.c2); c <= Math.max(area.c1, area.c2); c += 1) {
+            const cell = sheet.getRow(r).getCell(c);
+            if (cell.isMerged && cell.master !== cell) continue;
+            cell.value = null;
+            n += 1;
+          }
+        }
+        report.push(`${sheet.name}!${e.range || e.cell}: cleared ${n} cell(s)`);
+        break;
+      }
+      case "duplicate_sheet":
+      case "copy_sheet": {
+        const srcSheet = sheetOf(book, e.sheet, where);
+        const name = String(e.name || `${srcSheet.name} Copy`).slice(0, 31);
+        if (book.getWorksheet(name))
+          throw new UsageError(`${where}: there is already a sheet called ${JSON.stringify(name)}.`);
+        const copy = book.addWorksheet(name, {
+          properties: JSON.parse(JSON.stringify(srcSheet.properties ?? {})),
+          views: JSON.parse(JSON.stringify(srcSheet.views ?? [])),
+        });
+        srcSheet.columns.forEach((col, i) => {
+          const dst = copy.getColumn(i + 1);
+          if (col.width) dst.width = col.width;
+          if (col.hidden) dst.hidden = col.hidden;
+        });
+        srcSheet.eachRow({ includeEmpty: true }, (row, rNum) => {
+          const dstRow = copy.getRow(rNum);
+          if (row.height) dstRow.height = row.height;
+          if (row.hidden) dstRow.hidden = row.hidden;
+          row.eachCell({ includeEmpty: true }, (cell, cNum) => {
+            if (cell.isMerged && cell.master !== cell) return;
+            const dstCell = dstRow.getCell(cNum);
+            dstCell.value = cell.value && typeof cell.value === "object"
+              ? JSON.parse(JSON.stringify(cell.value))
+              : cell.value;
+            if (cell.style) dstCell.style = JSON.parse(JSON.stringify(cell.style));
+            if (cell.numFmt) dstCell.numFmt = cell.numFmt;
+          });
+        });
+        for (const m of Object.values(srcSheet._merges ?? {})) {
+          if (m?.range) copy.mergeCells(m.range);
+        }
+        report.push(`Duplicated sheet ${srcSheet.name} as ${name}`);
+        break;
+      }
+      case "auto_fit": {
+        const sheets = e.sheet !== undefined ? [sheetOf(book, e.sheet, where)] : book.worksheets;
+        for (const ws of sheets) {
+          const widths = new Map();
+          ws.eachRow({ includeEmpty: false }, (row) => {
+            row.eachCell({ includeEmpty: false }, (cell) => {
+              if (cell.isMerged) return;
+              const txt = cellText(cell);
+              const longest = txt.split(/\r?\n/).reduce((m, l) => Math.max(m, l.length), 0);
+              widths.set(cell.col, Math.max(widths.get(cell.col) ?? 8, longest + 3));
+            });
+          });
+          for (const [colIdx, w] of widths) {
+            ws.getColumn(colIdx).width = Math.min(60, Math.max(10, w));
+          }
+        }
+        report.push(`Auto-fitted columns on ${sheets.map((s) => s.name).join(", ")}`);
+        break;
+      }
       default:
         throw new UsageError(
-          `${where}: op must be set, set_range, format_cells, merge, unmerge, append_rows, insert_rows, delete_rows, insert_columns, delete_columns, add_sheet, delete_sheet, rename_sheet, set_column, set_row, freeze, filter, sort, conditional_format, chart or sheet_color.`,
+          `${where}: op must be set, set_range, find_replace, clear, format_cells, merge, unmerge, append_rows, insert_rows, delete_rows, insert_columns, delete_columns, add_sheet, duplicate_sheet, delete_sheet, rename_sheet, set_column, set_row, auto_fit, freeze, filter, sort, conditional_format, chart or sheet_color.`,
         );
     }
   });
@@ -907,15 +1195,16 @@ async function cmdEdit(o) {
 }
 
 const USAGE = `ocsc-xlsx new --spec book.json --out outputs/X.xlsx
-ocsc-xlsx read --in X.xlsx [--sheet NAME] [--range A1:K40 | --from ROW [--rows N]]
+ocsc-xlsx read --in X.xlsx [--sheet NAME] [--range A1:K40 | --from ROW [--rows N] | --find "keywords"]
 ocsc-xlsx edit --in X.xlsx --spec edits.json [--out outputs/Y.xlsx]
-read lists non-empty cells by row and column letter; a long sheet is read in parts, each ending with the command for the next part.
+read lists non-empty cells by row and column letter (or use --find to search all sheets); a long sheet is read in parts, each ending with the command for the next part.
 edits.json: {"edits":[{"op":"set","sheet":"Summary","cell":"B3","value":950}]}
-ops: set {sheet,cell,value,format?}, set_range {sheet,start,values:[[...]]}, append_rows {sheet,rows:[[...]]},
-insert_rows {sheet,at,rows:[[...]]}, delete_rows {sheet,from,count?}, add_sheet {name,columns?,rows?},
-delete_sheet {sheet}, rename_sheet {sheet,name}, set_column {sheet,column,width?,format?},
+ops: set {sheet,cell,value,format?}, set_range {sheet,start,values:[[...]]}, find_replace {find,replace,sheet?,all?,match_case?},
+clear {sheet,range}, append_rows {sheet,rows:[[...]]}, insert_rows {sheet,at,rows:[[...]]}, delete_rows {sheet,from,count?},
+insert_columns {sheet,at,count?}, delete_columns {sheet,at,count?}, add_sheet {name,columns?,rows?},
+duplicate_sheet {sheet,name}, delete_sheet {sheet}, rename_sheet {sheet,name}, set_column {sheet,column,width?,format?},
 format_cells {sheet,range|cell,color?,fill?,bold?,italic?,underline?,strike?,size?,font?,align?,wrap?,border?},
-merge {sheet,range}, unmerge {sheet,range}, set_row {sheet,row,height?,hidden?},
+merge {sheet,range}, unmerge {sheet,range}, set_row {sheet,row,height?,hidden?}, auto_fit {sheet?},
 freeze {sheet,rows,columns}, filter {sheet,range} or {clear:true}, sort {sheet,range,column,order?},
 conditional_format {sheet,range,rule,value?,fill?,color?}, chart {sheet,type,range,title?,at?}, sheet_color {sheet,color}
 Chart types are column, bar, line and pie. The first column of the range is the categories and the first row the series names.

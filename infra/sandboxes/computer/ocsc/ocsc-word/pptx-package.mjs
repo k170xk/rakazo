@@ -18,6 +18,7 @@ import {
   styleFrom,
   stylePhrase,
 } from "./format-edits.mjs";
+import { assertXmlValid, findSmartMatches, topLevelElements } from "./ooxml-safe.mjs";
 
 export const NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 export const REL = {
@@ -135,25 +136,32 @@ export function nextRelId(rels) {
 export function paragraphText(para) {
   let text = "";
   for (const piece of para.matchAll(
-    /<a:(?:r|fld)\b[^>]*>[\s\S]*?<\/a:(?:r|fld)>|<a:br\b[^>]*\/>/g,
+    /<a:(?:r|fld)(?=[\s>])[^>]*>[\s\S]*?<\/a:(?:r|fld)>|<a:br\b[^>]*\/>/g,
   )) {
     if (piece[0].startsWith("<a:br")) text += "\n";
-    else text += [...piece[0].matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map((t) => unesc(t[1])).join("");
+    else
+      text += [...piece[0].matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g)]
+        .map((t) => unesc(t[1]))
+        .join("");
   }
   return text;
 }
 
+const PPTX_PARA_RE = /<a:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/a:p>|<a:p(?=[\s/])[^>]*\/>/g;
+const PPTX_NONEMPTY_PARA_RE = /<a:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/a:p>/g;
+
 function bodyParagraphs(xml) {
-  return [...xml.matchAll(/<a:p>[\s\S]*?<\/a:p>|<a:p\/>/g)].map((p) => paragraphText(p[0]));
+  return [...xml.matchAll(PPTX_PARA_RE)].map((p) => paragraphText(p[0]));
 }
 
-export const SHAPE = /<p:sp\b[^>]*>[\s\S]*?<\/p:sp>/g;
+export const SHAPE = /<p:sp(?=[\s>])[^>]*>[\s\S]*?<\/p:sp>/g;
 
 // ---------- the package ----------
 
 export class Deck {
   constructor(zip) {
     this.zip = zip;
+    this.modifiedXml = new Map();
   }
 
   static async load(bytes) {
@@ -183,6 +191,9 @@ export class Deck {
 
   write(part, content) {
     this.zip.file(part, content);
+    if (typeof content === "string" && (part.endsWith(".xml") || part.endsWith(".rels"))) {
+      this.modifiedXml.set(part, content);
+    }
   }
 
   remove(part) {
@@ -321,6 +332,9 @@ export class Deck {
     this.write("ppt/presentation.xml", this.presentation);
     this.write("ppt/_rels/presentation.xml.rels", relsXml(this.presRels));
     this.write("[Content_Types].xml", this.types);
+    for (const [part, xml] of this.modifiedXml) {
+      if (this.has(part) && xml) assertXmlValid(xml, part);
+    }
     return this.zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
   }
 }
@@ -466,19 +480,17 @@ export async function readDeck(bytes) {
     const rels = await deck.rels(slide.part);
     const texts = [];
     for (const sp of xml.matchAll(SHAPE)) {
-      if (!/<p:txBody>/.test(sp[0])) continue;
+      if (!/<p:txBody(?=[\s>])/.test(sp[0])) continue;
       const text = bodyParagraphs(sp[0]).join("\n").trim();
       if (!text) continue;
       texts.push({ ...shapeInfo(sp[0]), text });
     }
-    const tables = [...xml.matchAll(/<a:tbl>[\s\S]*?<\/a:tbl>/g)].map((tbl) =>
-      [...tbl[0].matchAll(/<a:tr\b[^>]*>[\s\S]*?<\/a:tr>/g)].map((tr) =>
-        [...tr[0].matchAll(/<a:tc\b[^>]*>[\s\S]*?<\/a:tc>|<a:tc\b[^>]*\/>/g)].map((tc) =>
-          bodyParagraphs(tc[0]).join("\n").trim(),
-        ),
+    const tables = topLevelElements(xml, "a:tbl").map((tbl) =>
+      topLevelElements(tbl.xml, "a:tr").map((tr) =>
+        topLevelElements(tr.xml, "a:tc").map((tc) => bodyParagraphs(tc.xml).join("\n").trim()),
       ),
     );
-    const pictures = [...xml.matchAll(/<p:pic>[\s\S]*?<\/p:pic>/g)].map((pic, i) => {
+    const pictures = [...xml.matchAll(/<p:pic(?=[\s>])[^>]*>[\s\S]*?<\/p:pic>/g)].map((pic, i) => {
       const nv = /<p:cNvPr\b[^>]*>/.exec(pic[0])?.[0] ?? "";
       const ext = /<a:ext\b[^>]*cx="(\d+)"[^>]*cy="(\d+)"/.exec(pic[0]);
       return {
@@ -516,21 +528,18 @@ export async function readDeck(bytes) {
 // ---------- editing text ----------
 
 /** Replaces `find` with `replace` in one paragraph, across runs, keeping each run's formatting. */
-function replaceInParagraph(para, find, replace) {
-  const runs = [...para.matchAll(/<a:r>([\s\S]*?)<\/a:r>/g)].map((m) => {
-    const t = /<a:t>([\s\S]*?)<\/a:t>|<a:t\/>/.exec(m[1]);
+function replaceInParagraph(para, find, replace, all = true) {
+  const runs = [...para.matchAll(/<a:r(?=[\s>])[^>]*>([\s\S]*?)<\/a:r>/g)].map((m) => {
+    const t = /<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>|<a:t(?:\s[^>]*)?\/>/.exec(m[1]);
     return { whole: m[0], index: m.index, text: t?.[1] !== undefined ? unesc(t[1]) : "" };
   });
   const full = runs.map((r) => r.text).join("");
-  if (!find || !full.includes(find)) return { para, count: 0 };
+  const hits = findSmartMatches(full, find, { all });
+  if (!hits.length) return { para, count: 0 };
   const texts = runs.map((r) => r.text);
-  let count = 0;
-  let from = full.length;
-  while (from >= 0) {
-    const at = full.lastIndexOf(find, from);
-    if (at === -1) break;
-    count += 1;
-    const end = at + find.length;
+  // Apply matches right-to-left so earlier offsets stay valid.
+  for (let h = hits.length - 1; h >= 0; h -= 1) {
+    const { start: at, end } = hits[h];
     let pos = 0;
     let first = -1;
     for (let i = 0; i < texts.length; i += 1) {
@@ -541,12 +550,9 @@ function replaceInParagraph(para, find, replace) {
       const cutFrom = Math.max(at - start, 0);
       const cutTo = Math.min(end - start, runs[i].text.length);
       const current = texts[i];
-      // `texts` may already be shorter than the original run when an earlier match edited it;
-      // matches are applied right to left so earlier offsets stay valid.
       texts[i] = current.slice(0, cutFrom) + (first === -1 ? replace : "") + current.slice(cutTo);
       if (first === -1) first = i;
     }
-    from = at - find.length;
   }
   let out = "";
   let last = 0;
@@ -554,16 +560,20 @@ function replaceInParagraph(para, find, replace) {
     out += para.slice(last, run.index);
     last = run.index + run.whole.length;
     if (texts[i] === "" && runs[i].text !== "") continue;
-    out += run.whole.replace(/<a:t>[\s\S]*?<\/a:t>|<a:t\/>/, `<a:t>${esc(texts[i])}</a:t>`);
+    out += run.whole.replace(
+      /<a:t(?:\s[^>]*)?>[\s\S]*?<\/a:t>|<a:t(?:\s[^>]*)?\/>/,
+      `<a:t>${esc(texts[i])}</a:t>`,
+    );
   }
   out += para.slice(last);
-  return { para: out, count };
+  return { para: out, count: hits.length };
 }
 
-function replaceText(xml, find, replace) {
+function replaceText(xml, find, replace, all = true) {
   let count = 0;
-  const out = xml.replace(/<a:p>[\s\S]*?<\/a:p>/g, (para) => {
-    const result = replaceInParagraph(para, find, replace);
+  const out = xml.replace(PPTX_NONEMPTY_PARA_RE, (para) => {
+    if (!all && count) return para;
+    const result = replaceInParagraph(para, find, replace, all);
     count += result.count;
     return result.para;
   });
@@ -572,10 +582,10 @@ function replaceText(xml, find, replace) {
 
 /** New paragraphs for a text box, styled like its first paragraph and run. */
 function paragraphsLike(body, lines) {
-  const firstPara = /<a:p>[\s\S]*?<\/a:p>/.exec(body)?.[0] ?? "<a:p></a:p>";
+  const firstPara = /<a:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/a:p>/.exec(body)?.[0] ?? "<a:p></a:p>";
   const pPr = /<a:pPr\b[^>]*\/>|<a:pPr\b[^>]*>[\s\S]*?<\/a:pPr>/.exec(firstPara)?.[0] ?? "";
   const rPr =
-    (/<a:r>([\s\S]*?)<\/a:r>/.exec(body)?.[1] ?? "").match(
+    (/<a:r(?=[\s>])[^>]*>([\s\S]*?)<\/a:r>/.exec(body)?.[1] ?? "").match(
       /<a:rPr\b[^>]*\/>|<a:rPr\b[^>]*>[\s\S]*?<\/a:rPr>/,
     )?.[0] ?? "";
   const end =
@@ -597,18 +607,208 @@ function paragraphsLike(body, lines) {
     .join("");
 }
 
+function replaceTxBodyParagraphs(txBodyXml, lines) {
+  const openTag = /<(?:\w+:)?txBody(?=[\s>])[^>]*>/.exec(txBodyXml)?.[0];
+  const closeTag = /<\/(?:\w+:)?txBody>$/.exec(txBodyXml)?.[0];
+  if (!openTag || !closeTag) return null;
+  const inner = txBodyXml.slice(openTag.length, -closeTag.length);
+  const firstParaIdx = inner.search(/<a:p(?=[\s>/])/);
+  if (firstParaIdx >= 0) {
+    const head = inner.slice(0, firstParaIdx);
+    const body = inner.slice(firstParaIdx);
+    return `${openTag}${head}${paragraphsLike(body, lines)}${closeTag}`;
+  }
+  return `${openTag}${inner}${paragraphsLike("", lines)}${closeTag}`;
+}
+
 export function setShapeText(xml, shapeId, lines) {
   let found = false;
   const out = xml.replace(SHAPE, (sp) => {
     if (found || shapeInfo(sp).shape !== shapeId) return sp;
+    const txMatch = /<p:txBody(?=[\s>])[^>]*>[\s\S]*?<\/p:txBody>/.exec(sp);
+    if (!txMatch) return sp;
+    const nextBody = replaceTxBodyParagraphs(txMatch[0], lines);
+    if (!nextBody) return sp;
     found = true;
-    if (!/<p:txBody>/.test(sp)) return sp;
-    return sp.replace(
-      /(<p:txBody>[\s\S]*?)(<a:p>[\s\S]*<\/a:p>|<a:p\/>)([\s\S]*?<\/p:txBody>)/,
-      (_, head, body, tail) => `${head}${paragraphsLike(body, lines)}${tail}`,
-    );
+    return sp.slice(0, txMatch.index) + nextBody + sp.slice(txMatch.index + txMatch[0].length);
   });
   return { xml: out, found };
+}
+
+function pptxLabelKey(text) {
+  return String(text ?? "")
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/:$/, "")
+    .trim()
+    .toLowerCase();
+}
+
+function writePptxCell(tcXml, text) {
+  const lines = String(text ?? "").split(/\r?\n/);
+  const txMatch = /<a:txBody(?=[\s>])[^>]*>[\s\S]*?<\/a:txBody>/.exec(tcXml);
+  if (txMatch) {
+    const nextBody = replaceTxBodyParagraphs(txMatch[0], lines);
+    if (nextBody) {
+      return tcXml.slice(0, txMatch.index) + nextBody + tcXml.slice(txMatch.index + txMatch[0].length);
+    }
+  }
+  const openEnd = tcXml.indexOf(">");
+  if (tcXml.endsWith("/>")) {
+    const open = tcXml.slice(0, -2) + ">";
+    return `${open}<a:txBody><a:bodyPr/><a:lstStyle/>${paragraphsLike("", lines)}</a:txBody><a:tcPr/></a:tc>`;
+  }
+  const tcPr = /<a:tcPr\b[^>]*\/>|<a:tcPr\b[^>]*>[\s\S]*?<\/a:tcPr>/.exec(tcXml)?.[0] ?? "<a:tcPr/>";
+  return `${tcXml.slice(0, openEnd + 1)}<a:txBody><a:bodyPr/><a:lstStyle/>${paragraphsLike("", lines)}</a:txBody>${tcPr}</a:tc>`;
+}
+
+/** Updates one PowerPoint table cell by (table, row, column) or (label, occurrence?, column?). */
+export function setPptxTableCell(xml, op) {
+  const tables = topLevelElements(xml, "a:tbl");
+  if (!tables.length) return { xml, updated: false, reason: "Slide has no tables." };
+  const text = String(op.text ?? op.value ?? "");
+
+  if (typeof op.row === "number") {
+    const tIdx = typeof op.table === "number" ? op.table : 0;
+    const cIdx = typeof op.column === "number" ? op.column : typeof op.col === "number" ? op.col : 1;
+    const tbl = tables[tIdx];
+    if (!tbl) return { xml, updated: false, reason: `Table ${tIdx} not found (slide has ${tables.length}).` };
+    const rows = topLevelElements(tbl.xml, "a:tr");
+    const row = rows[op.row];
+    if (!row) return { xml, updated: false, reason: `Row ${op.row} not found in table ${tIdx} (has ${rows.length}).` };
+    const cells = topLevelElements(row.xml, "a:tc");
+    const cell = cells[cIdx];
+    if (!cell) return { xml, updated: false, reason: `Column ${cIdx} not found in row ${op.row} (has ${cells.length}).` };
+    const nextCell = writePptxCell(cell.xml, text);
+    const nextRow = row.xml.slice(0, cell.from) + nextCell + row.xml.slice(cell.to);
+    const nextTbl = tbl.xml.slice(0, row.from) + nextRow + tbl.xml.slice(row.to);
+    return {
+      xml: xml.slice(0, tbl.from) + nextTbl + xml.slice(tbl.to),
+      updated: true,
+      summary: `Set table ${tIdx} row ${op.row} col ${cIdx}`,
+    };
+  }
+
+  const wantedLabel = pptxLabelKey(op.label ?? op.find ?? "");
+  if (!wantedLabel) {
+    return { xml, updated: false, reason: 'set_table_cell needs either "row" and "column", or "label".' };
+  }
+  const wantedOcc = typeof op.occurrence === "number" && op.occurrence >= 1 ? Math.floor(op.occurrence) : 1;
+  const targetCol = typeof op.column === "number" ? op.column : typeof op.col === "number" ? op.col : null;
+  let seen = 0;
+  for (let tIdx = 0; tIdx < tables.length; tIdx += 1) {
+    if (typeof op.table === "number" && op.table !== tIdx) continue;
+    const tbl = tables[tIdx];
+    const rows = topLevelElements(tbl.xml, "a:tr");
+    for (let rIdx = 0; rIdx < rows.length; rIdx += 1) {
+      const row = rows[rIdx];
+      const cells = topLevelElements(row.xml, "a:tc");
+      const texts = cells.map((c) => bodyParagraphs(c.xml).join("\n").trim());
+      const matchIdx = texts.findIndex((t, i) => i < cells.length - 1 && pptxLabelKey(t) === wantedLabel);
+      if (matchIdx < 0) continue;
+      seen += 1;
+      if (seen !== wantedOcc) continue;
+      const cIdx = targetCol ?? matchIdx + 1;
+      const cell = cells[cIdx];
+      if (!cell) return { xml, updated: false, reason: `Column ${cIdx} not found in row ${rIdx}.` };
+      const nextCell = writePptxCell(cell.xml, text);
+      const nextRow = row.xml.slice(0, cell.from) + nextCell + row.xml.slice(cell.to);
+      const nextTbl = tbl.xml.slice(0, row.from) + nextRow + tbl.xml.slice(row.to);
+      return {
+        xml: xml.slice(0, tbl.from) + nextTbl + xml.slice(tbl.to),
+        updated: true,
+        summary: `Set cell beside "${op.label ?? op.find}" (table ${tIdx}, row ${rIdx}, col ${cIdx})`,
+      };
+    }
+  }
+  return { xml, updated: false, reason: `Table label not found: ${JSON.stringify(op.label ?? op.find)}.` };
+}
+
+/** Adds a row to a PowerPoint table by cloning the template row's height and cell styles. */
+export function addPptxTableRow(xml, op) {
+  const values = Array.isArray(op.cells) ? op.cells : Array.isArray(op.values) ? op.values : null;
+  if (!values?.length) return { xml, updated: false, reason: 'add_table_row needs "cells", a list of strings.' };
+  const tables = topLevelElements(xml, "a:tbl");
+  if (!tables.length) return { xml, updated: false, reason: "Slide has no tables." };
+  const tIdx = typeof op.table === "number" ? op.table : 0;
+  const tbl = tables[tIdx];
+  if (!tbl) return { xml, updated: false, reason: `Table ${tIdx} not found (slide has ${tables.length}).` };
+  const rows = topLevelElements(tbl.xml, "a:tr");
+  if (!rows.length) return { xml, updated: false, reason: `Table ${tIdx} has no rows.` };
+  const afterIdx =
+    typeof op.after_row === "number"
+      ? Math.max(0, Math.min(op.after_row, rows.length - 1))
+      : rows.length - 1;
+  const tpl = rows[afterIdx];
+  const cells = topLevelElements(tpl.xml, "a:tc");
+  if (!cells.length) return { xml, updated: false, reason: `Row ${afterIdx} has no cells.` };
+  let newRow = "";
+  let last = 0;
+  for (let i = 0; i < cells.length; i += 1) {
+    newRow += tpl.xml.slice(last, cells[i].from);
+    last = cells[i].to;
+    newRow += writePptxCell(cells[i].xml, i < values.length ? String(values[i] ?? "") : "");
+  }
+  newRow += tpl.xml.slice(last);
+  const nextTbl = tbl.xml.slice(0, tpl.to) + newRow + tbl.xml.slice(tpl.to);
+  return {
+    xml: xml.slice(0, tbl.from) + nextTbl + xml.slice(tbl.to),
+    updated: true,
+    summary: `Added row after row ${afterIdx} in table ${tIdx}`,
+  };
+}
+
+/** Removes a row from a PowerPoint table by 0-based `row` index or by row `label` (refuses to empty the table). */
+export function deletePptxTableRow(xml, op) {
+  const tables = topLevelElements(xml, "a:tbl");
+  if (!tables.length) return { xml, updated: false, reason: "Slide has no tables." };
+
+  if (typeof op.row === "number" || (op.row != null && String(op.row).trim() !== "")) {
+    const tIdx = typeof op.table === "number" ? op.table : 0;
+    const tbl = tables[tIdx];
+    if (!tbl) return { xml, updated: false, reason: `Table ${tIdx} not found (slide has ${tables.length}).` };
+    const rows = topLevelElements(tbl.xml, "a:tr");
+    if (rows.length <= 1) return { xml, updated: false, reason: `Cannot delete the only remaining row in table ${tIdx}.` };
+    const rIdx = Number(op.row);
+    if (!Number.isInteger(rIdx) || !rows[rIdx]) {
+      return { xml, updated: false, reason: `Row ${op.row} not found in table ${tIdx} (has ${rows.length}).` };
+    }
+    const nextTbl = tbl.xml.slice(0, rows[rIdx].from) + tbl.xml.slice(rows[rIdx].to);
+    return {
+      xml: xml.slice(0, tbl.from) + nextTbl + xml.slice(tbl.to),
+      updated: true,
+      summary: `Deleted row ${rIdx} from table ${tIdx}`,
+    };
+  }
+
+  const wantedLabel = pptxLabelKey(op.label ?? op.find ?? "");
+  if (!wantedLabel) {
+    return { xml, updated: false, reason: 'delete_table_row needs either "row" (0-based index) or "label".' };
+  }
+  const wantedOcc = typeof op.occurrence === "number" && op.occurrence >= 1 ? Math.floor(op.occurrence) : 1;
+  let seen = 0;
+  for (let tIdx = 0; tIdx < tables.length; tIdx += 1) {
+    if (typeof op.table === "number" && op.table !== tIdx) continue;
+    const tbl = tables[tIdx];
+    const rows = topLevelElements(tbl.xml, "a:tr");
+    for (let rIdx = 0; rIdx < rows.length; rIdx += 1) {
+      const cells = topLevelElements(rows[rIdx].xml, "a:tc");
+      const texts = cells.map((c) => bodyParagraphs(c.xml).join("\n").trim());
+      if (!texts.some((t) => pptxLabelKey(t) === wantedLabel)) continue;
+      seen += 1;
+      if (seen !== wantedOcc) continue;
+      if (rows.length <= 1) return { xml, updated: false, reason: `Cannot delete the only remaining row in table ${tIdx}.` };
+      const nextTbl = tbl.xml.slice(0, rows[rIdx].from) + tbl.xml.slice(rows[rIdx].to);
+      return {
+        xml: xml.slice(0, tbl.from) + nextTbl + xml.slice(tbl.to),
+        updated: true,
+        summary: `Deleted row matching "${op.label ?? op.find}" (table ${tIdx}, row ${rIdx})`,
+      };
+    }
+  }
+  return { xml, updated: false, reason: `Table row matching "${op.label ?? op.find}" was not found.` };
 }
 
 function titleShapeId(xml) {
@@ -632,15 +832,16 @@ export async function setNotes(deck, part, notes) {
     const out = xml.replace(SHAPE, (sp) => {
       if (done || !/<p:ph\b[^>]*type="body"/.test(sp)) return sp;
       done = true;
-      if (!/<p:txBody>/.test(sp))
+      const txMatch = /<p:txBody(?=[\s>])[^>]*>[\s\S]*?<\/p:txBody>/.exec(sp);
+      if (!txMatch)
         return sp.replace(
           "</p:sp>",
           `<p:txBody><a:bodyPr/><a:lstStyle/>${paragraphsLike("", lines)}</p:txBody></p:sp>`,
         );
-      return sp.replace(
-        /(<p:txBody>[\s\S]*?)(<a:p>[\s\S]*<\/a:p>|<a:p\/>)([\s\S]*?<\/p:txBody>)/,
-        (_, head, body, tail) => `${head}${paragraphsLike(body, lines)}${tail}`,
-      );
+      const nextBody = replaceTxBodyParagraphs(txMatch[0], lines);
+      return nextBody
+        ? sp.slice(0, txMatch.index) + nextBody + sp.slice(txMatch.index + txMatch[0].length)
+        : sp;
     });
     if (done) {
       deck.write(target, out);
@@ -803,7 +1004,7 @@ export async function duplicateSlide(deck, index, at) {
 
 async function replacePicture(deck, part, which, image) {
   const xml = (await deck.text(part)) ?? "";
-  const pics = [...xml.matchAll(/<p:pic>[\s\S]*?<\/p:pic>/g)];
+  const pics = [...xml.matchAll(/<p:pic(?=[\s>])[^>]*>[\s\S]*?<\/p:pic>/g)];
   const pick =
     typeof which === "number" || /^\d+$/.test(String(which ?? ""))
       ? pics[Number(which) - 1]
@@ -884,11 +1085,13 @@ export async function applyEdits(
         const find = String(edit.find ?? "");
         if (!find) throw new Error(`${label}: "find" is required.`);
         const replace = String(edit.replace ?? "");
+        const replaceAll = edit.all !== false;
         const targets = edit.slide === undefined ? list : [slideAt(edit.slide)];
         let total = 0;
         for (const slide of targets) {
+          if (!replaceAll && total > 0) break;
           const xml = (await deck.text(slide.part)) ?? "";
-          const result = replaceText(xml, find, replace);
+          const result = replaceText(xml, find, replace, replaceAll);
           if (result.count === 0) continue;
           deck.write(slide.part, result.xml);
           total += result.count;
@@ -1082,9 +1285,40 @@ export async function applyEdits(
         summary.push(`Moved slide ${from + 1} to position ${to + 1}.`);
         break;
       }
+      case "set_table_cell":
+      case "replace_table_cell": {
+        const slide = slideAt(edit.slide);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const res = setPptxTableCell(xml, edit);
+        if (!res.updated) throw new Error(`${label}: ${res.reason}`);
+        deck.write(slide.part, res.xml);
+        note(slide.part, `${res.summary}.`);
+        summary.push(`${res.summary} on slide ${list.indexOf(slide) + 1}.`);
+        break;
+      }
+      case "add_table_row": {
+        const slide = slideAt(edit.slide);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const res = addPptxTableRow(xml, edit);
+        if (!res.updated) throw new Error(`${label}: ${res.reason}`);
+        deck.write(slide.part, res.xml);
+        note(slide.part, `${res.summary}.`);
+        summary.push(`${res.summary} on slide ${list.indexOf(slide) + 1}.`);
+        break;
+      }
+      case "delete_table_row": {
+        const slide = slideAt(edit.slide);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const res = deletePptxTableRow(xml, edit);
+        if (!res.updated) throw new Error(`${label}: ${res.reason}`);
+        deck.write(slide.part, res.xml);
+        note(slide.part, `${res.summary}.`);
+        summary.push(`${res.summary} on slide ${list.indexOf(slide) + 1}.`);
+        break;
+      }
       default:
         throw new Error(
-          `${label}: op must be replace_text, format_text, format_shape, place_shape, remove_shape, slide_background, set_text, title, notes, replace_image, insert, replace, duplicate, remove or move.`,
+          `${label}: op must be replace_text, format_text, format_shape, place_shape, remove_shape, slide_background, set_text, set_table_cell, add_table_row, delete_table_row, title, notes, replace_image, insert, replace, duplicate, remove or move.`,
         );
     }
   }

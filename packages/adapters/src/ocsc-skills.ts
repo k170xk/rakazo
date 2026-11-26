@@ -149,12 +149,17 @@ When the person asks for changes to a document you made or one they sent, always
  {"op":"format_text","find":"the heading","fill":"#76BF43","color":"white","spacing":"1.5"},
  {"op":"page_setup","margin":2.5,"paper":"A4","orientation":"portrait"},
  {"op":"append","blocks":[...]},
- {"op":"fill_fields","fields":{"client_name":"..."}},
+ {"op":"fill_fields","fields":{"client_name":"...","Applicant Name":"..."}},
+ {"op":"set_table_cell","label":"Comments","occurrence":2,"text":"..."},
+ {"op":"set_table_cell","table":0,"row":3,"column":1,"text":"..."},
+ {"op":"add_table_row","table":0,"cells":["Col 1","Col 2","Col 3"]},
+ {"op":"delete_table_row","table":0,"row":4},
  {"op":"set_office","office":"Cork"},
  {"op":"set_title","text":"..."},
  {"op":"set_subtitle","text":"..."}]}
 3. Run: ocsc-word edit --in outputs/<Name>.docx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.docx
 Save each round of changes as a new version (-v2, -v3) so earlier versions stay available, unless the person asks you to overwrite.
+FORMS AND REFERENCE TABLES: many questionnaires are tables of (label | blank answer), rating grids (skill | Excellent | Very Good | Good | Fair | Poor), or Word content controls (<w:sdt>). fill_fields fills {{placeholders}}, writes into the empty cell beside a matching label (ignoring apostrophes/colons), ticks the matching column in a rating grid, and updates Word content controls and checkboxes. For repeated labels (such as two "Comments" rows), or to overwrite a cell that already has text, use set_table_cell with {"label":"...","occurrence":2,"text":"..."} or 0-based {"table":0,"row":R,"column":C,"text":"..."}. To append or remove rows in any table while preserving its styling, use add_table_row ({"table":0,"cells":[...],"after_row":N}) and delete_table_row ({"table":0,"row":N} or {"label":"..."}). replace_text also searches headers and footers automatically. Do not rewrite question labels with replace_text, and do not tell the person it cannot be done after one refusal.
 CHOOSING THE EDIT: replace_section, delete_section, add_to_section and insert_after_heading work only on titles ocsc-word read lists as "heading". Contracts and other documents people send usually have bold, numbered clause titles that read lists as "text" (for example "4. Completion" or "Completion, Formation and Subscription"): change those clauses with replace_paragraphs, from the clause title's exact words through words in the clause's last paragraph, and start its blocks with the title when the title stays; change wording inside a clause with replace_text.
 WHEN AN EDIT IS REFUSED: a refused edit saves nothing, so fix the spec and run it again before you reply; never tell the person it cannot be done after one refusal. "Heading not found" lists the headings Word sees: in a document someone uploaded, or saved from the studio, a title can be bold or numbered ordinary text rather than a Word heading, so change that part with replace_paragraphs from its exact first words through words in the last paragraph to change (its blocks may start with the heading again), or with replace_text for wording. "Text not found": run ocsc-word read again on the newest version (studio saves and tracked changes move wording) and copy a shorter exact phrase from within one paragraph. Tell the person only when the second way is refused too, quoting what was refused. Never get around a refused edit by retyping the document into a new one: that loses their wording, layout and figures.
 A new document starts at revision P01, and edits keep that revision; the Table of Contents is rewritten after every edit. Do not ask about revisions. Only when the person asks for a new revision (for example "issue it as P02", "new revision", "rev it up"), add "revision":true beside "edits" for the next code, or "revision":"C01" for a specific one, and "author":"<name>" when someone else made it: Document Control gets a row with the code and today's date, and the cover, job row and footers follow.
@@ -283,6 +288,11 @@ This works for decks you made and for PowerPoints the person uploaded. Run ocsc-
  {"op":"slide_background","slide":3,"fill":"navy"},
  {"op":"remove_shape","slide":3,"shape":4},
  {"op":"set_text","slide":2,"shape":4,"bullets":["...","..."]},
+ {"op":"set_table_cell","slide":3,"table":0,"row":1,"column":2,"text":"..."},
+ {"op":"set_table_cell","slide":3,"label":"Structural","text":"..."},
+ {"op":"add_table_row","slide":3,"table":0,"cells":["Item","£1,200","Complete"]},
+ {"op":"delete_table_row","slide":3,"table":0,"row":2},
+ {"op":"delete_table_row","slide":3,"label":"Civil"},
  {"op":"title","slide":1,"title":"..."},
  {"op":"notes","slide":1,"notes":"..."},
  {"op":"replace_image","slide":5,"picture":1,"image":"<url or path>"},
@@ -333,18 +343,22 @@ A cell is text, a number, true/false, null, {"formula":"SUM(D2:D9)"} (no leading
 
 EDIT
 1. Always read it first: ocsc-xlsx read --in <path>.xlsx. It lists the sheets, then each non-empty cell by row number and column letter, for example "23":{"B":"Stage iii","D":"10","F":"=D23*E23 → €950.00"}: a formula shows as =FORMULA → its value, and a merged range (in "merged") shows once, at its top-left cell. Use those addresses in your edits.
-A long sheet is read in parts: when the result has "more", run the command it gives (--from <row>) until you have what you need. Read one sheet with --sheet "<name>", or one block with --range A20:L40. Never parse the .xlsx yourself (no Python, unzip or XML).
+A long sheet is read in parts: when the result has "more", run the command it gives (--from <row>) until you have what you need. Read one sheet with --sheet "<name>", one block with --range A20:L40, or search across every sheet with --find "<keywords>". Never parse the .xlsx yourself (no Python, unzip or XML).
 2. Write work/<short-name>-edits.json:
 {"edits":[
  {"op":"set","sheet":"Costs","cell":"C2","value":475},
  {"op":"set_range","sheet":"Costs","start":"A5","values":[["Scaffold",1,1800,{"formula":"B5*C5"}]]},
+ {"op":"find_replace","find":"2025","replace":"2026"},
+ {"op":"clear","sheet":"Costs","range":"A10:D15"},
  {"op":"insert_rows","sheet":"Costs","at":4,"rows":[["Labour",15,320,{"formula":"B4*C4"}]]},
  {"op":"append_rows","sheet":"Notes","rows":[["Rates from Q3 tender"]]},
  {"op":"delete_rows","sheet":"Costs","from":3,"count":1},
  {"op":"add_sheet","name":"Programme","columns":["Task","Start"],"rows":[["Survey",{"date":"2026-11-02"}]]},
+ {"op":"duplicate_sheet","sheet":"Costs","name":"Costs Option B"},
  {"op":"rename_sheet","sheet":"Notes","name":"Assumptions"},
  {"op":"delete_sheet","sheet":"Old"},
  {"op":"set_column","sheet":"Costs","column":"C","width":14,"format":"£#,##0.00"},
+ {"op":"auto_fit","sheet":"Costs"},
  {"op":"format_cells","sheet":"Costs","range":"A1:D1","fill":"green","color":"white","bold":true,"font":"Calibri"},
  {"op":"format_cells","sheet":"Costs","cell":"C2","color":"red","wrap":true},
  {"op":"merge","sheet":"Costs","range":"A1:D1"},

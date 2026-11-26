@@ -241,6 +241,42 @@ export function printedOutOfMemory(stderr: string) {
   return OUT_OF_MEMORY_OUTPUT.test(stderr);
 }
 
+/** `memory.events` for one container. A child can be killed while the container itself stays up. */
+export function cgroupMemoryEventsPaths(containerId: string) {
+  const id = containerId.replace(/^sha256:/, "");
+  return ["/host-cgroup", "/sys/fs/cgroup"].flatMap((root) => [
+    `${root}/system.slice/docker-${id}.scope/memory.events`,
+    `${root}/docker/${id}/memory.events`,
+  ]);
+}
+
+/** True when the cgroup recorded an OOM kill, including one that only stopped a child process. */
+export function cgroupEventsShowOom(events: string) {
+  const value = (name: string) => {
+    const match = new RegExp(`^${name}\\s+(\\d+)$`, "m").exec(events);
+    return match ? Number(match[1]) : 0;
+  };
+  return value("oom") > 0 || value("oom_kill") > 0;
+}
+
+/**
+ * Whether this attempt has to move to the large-document runner. Docker sets `OOMKilled` when the
+ * kernel stops a child even if the command then exits 0, which used to look like success and left
+ * the partial file on the small runner.
+ */
+export function toolRunOutOfMemory(input: {
+  timedOut: boolean;
+  aborted: boolean;
+  code: number;
+  output: string;
+  dockerOomKilled: boolean;
+  memoryEvents: string;
+}) {
+  if (input.timedOut || input.aborted) return false;
+  if (input.dockerOomKilled || cgroupEventsShowOom(input.memoryEvents)) return true;
+  return input.code !== 0 && (printedOutOfMemory(input.output) || input.code === 137);
+}
+
 /** Whether the server has room for a command that may use `limitBytes`; unknown counts as room. */
 export function memoryRoomFor(limitBytes: number, availableBytes: number | null) {
   return availableBytes === null || availableBytes >= limitBytes + TOOL_RUN_MEMORY_RESERVE_BYTES;

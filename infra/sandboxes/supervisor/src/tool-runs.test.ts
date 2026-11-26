@@ -21,7 +21,9 @@ import {
   memoryRoomFor,
   openToolCacheFile,
   prepareToolRunMount,
+  cgroupEventsShowOom,
   printedOutOfMemory,
+  toolRunOutOfMemory,
   slotsPerPerson,
   sweepToolCache,
   toolRunContainerOptions,
@@ -414,5 +416,28 @@ describe("runner capacity", () => {
       ),
     ).toBe(true);
     expect(printedOutOfMemory("Deck.pptx does not exist.")).toBe(false);
+  });
+
+  it("retries when the kernel stopped a child even though the command then exited 0", () => {
+    const base = {
+      timedOut: false,
+      aborted: false,
+      code: 0,
+      output: '{"ok":false,"error":"extract failed"}',
+      dockerOomKilled: false,
+      memoryEvents: "",
+    };
+    expect(toolRunOutOfMemory({ ...base, dockerOomKilled: true })).toBe(true);
+    expect(toolRunOutOfMemory({ ...base, memoryEvents: "oom 1\noom_kill 1\n" })).toBe(true);
+    expect(cgroupEventsShowOom("oom 0\noom_kill 0\n")).toBe(false);
+    expect(toolRunOutOfMemory(base)).toBe(false);
+    expect(
+      toolRunOutOfMemory({
+        ...base,
+        code: 1,
+        output: "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory",
+      }),
+    ).toBe(true);
+    expect(toolRunOutOfMemory({ ...base, timedOut: true, dockerOomKilled: true })).toBe(false);
   });
 });

@@ -34,9 +34,18 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
+import {
+  addTableRow,
+  deleteTableRow,
+  fillContentControls,
+  fillLabelledTableCells,
+  setTableCell,
+} from "./fill-labelled-cells.mjs";
 import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
+import { findSmartMatches, xmlWellFormed } from "./ooxml-safe.mjs";
 import { firstElement, firstRunProps, mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
+import { replaceWordParagraph } from "./word-replace.mjs";
 import { paginateWordOutline } from "./read-pagination.mjs";
 import {
   WordCommentStore,
@@ -878,7 +887,7 @@ class Doc {
     this.xml = mapParagraphs(this.xml, (p) => {
       if (!all && count) return p;
       const t = textOf(p);
-      if (!t.includes(find)) return p;
+      if (!findSmartMatches(t, find, { all: false }).length) return p;
       const id = this.commentStore().add(clean);
       count += 1;
       return anchorCommentOnParagraph(p, id);
@@ -886,28 +895,28 @@ class Doc {
     return count;
   }
 
-  replaceText(find, replacement, all = true, rev = null, commentText = null) {
+  replaceTextInXml(xml, find, replacement, all = true, rev = null, commentText = null) {
     let count = 0;
     const cleanComment = typeof commentText === "string" ? commentText.trim() : "";
-    this.xml = mapParagraphs(this.xml, (p) => {
+    const nextXml = mapParagraphs(xml, (p) => {
       if (!all && count) return p;
-      const t = textOf(p);
-      if (!t.includes(find)) return p;
-      const hits = t.split(find).length - 1;
-      count += all ? hits : 1;
-      const next = all
-        ? t.split(find).join(replacement)
-        : t.replace(find, replacement);
-      let edited = rev
-        ? rev.replaceInParagraph(p, find, replacement, all, next)
-        : rewriteParagraphText(p, next);
+      const result = replaceWordParagraph(p, find, replacement, { all, rev });
+      if (!result.count) return p;
+      count += result.count;
+      let edited = result.paragraph;
       if (cleanComment) {
         const cid = this.commentStore().add(cleanComment);
         edited = anchorCommentOnParagraph(edited, cid);
       }
       return edited;
     });
-    return count;
+    return { xml: nextXml, count };
+  }
+
+  replaceText(find, replacement, all = true, rev = null, commentText = null) {
+    const res = this.replaceTextInXml(this.xml, find, replacement, all, rev, commentText);
+    this.xml = res.xml;
+    return res.count;
   }
 
   /** Fills {{field}} placeholders in the body, headers and footers. Formatting is kept where a placeholder sits in one run. */
@@ -1551,11 +1560,17 @@ class Doc {
       );
       this.zip.file("docProps/core.xml", c);
     }
-    // Word refuses unbalanced XML as "unreadable content"; a part that opened sound must stay so.
-    for (const [name, part] of [["word/document.xml", this.xml], ...(await this.headerFooterFiles())]) {
-      if (this.openedSound?.get(name) !== false && !xmlTagsBalanced(part))
+    // Word refuses unbalanced or malformed XML as "unreadable content"; every sound part must stay sound.
+    const partsToCheck = [
+      ["word/document.xml", this.xml],
+      ...(this.commentsXml ? [["word/comments.xml", this.commentsXml]] : []),
+      ...(await this.headerFooterFiles()),
+    ];
+    for (const [name, part] of partsToCheck) {
+      const check = xmlWellFormed(part);
+      if (this.openedSound?.get(name) !== false && (!xmlTagsBalanced(part) || !check.ok))
         throw new UsageError(
-          `This edit would leave ${name} with tags that do not nest, which Word reports as unreadable content, so nothing was saved. Make the edit again without changing wording in or beside text boxes and shapes, or replace those whole paragraphs with replace_paragraphs.`,
+          `This edit would leave ${name} with invalid XML (${check.reason ?? "unbalanced tags"}), which Word reports as unreadable content, so nothing was saved. Try again with replace_paragraphs or set_table_cell.`,
         );
     }
     mkdirSync(dirname(outFull), { recursive: true });
@@ -2273,12 +2288,10 @@ function outlineOf(doc) {
   for (const e of doc.elements()) {
     if (e.tag === "sectPr") continue;
     if (e.tag === "tbl") {
-      const rows = [...e.xml.matchAll(/<w:tr\b[\s\S]*?<\/w:tr>/g)]
-        .filter((r) => !rowDeleted(r[0]))
+      const rows = childrenOf(e.xml, "tr")
+        .filter((r) => !rowDeleted(r.xml))
         .map((r) =>
-          [...r[0].matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)].map((c) =>
-            textOf(c[0]).trim(),
-          ),
+          childrenOf(r.xml, "tc").map((c) => textOf(c.xml).trim()),
         );
       if (rows.length) outline.push({ table: rows });
     } else if (e.level && e.text.trim())
@@ -2402,13 +2415,28 @@ async function cmdEdit(o) {
       case "replace_text": {
         if (!op.find)
           throw new UsageError(`Edit ${n}: replace_text needs "find".`);
-        const c = doc.replaceText(
-          String(op.find),
-          String(op.replace ?? ""),
-          op.all !== false,
+        const findStr = String(op.find);
+        const replaceStr = String(op.replace ?? "");
+        const replaceAll = op.all !== false;
+        let c = doc.replaceText(
+          findStr,
+          replaceStr,
+          replaceAll,
           rev,
           typeof op.comment === "string" ? op.comment : null,
         );
+        // Also search headers & footers when replacing all occurrences, or when body had no match.
+        if (replaceAll || c === 0) {
+          const hfParts = await doc.headerFooterFiles();
+          for (const [name, xml] of hfParts) {
+            if (!replaceAll && c > 0) break;
+            const res = doc.replaceTextInXml(xml, findStr, replaceStr, replaceAll, rev, null);
+            if (!res.count) continue;
+            c += res.count;
+            doc.zip.file(name, res.xml);
+            if (headers.has(name)) headers.set(name, res.xml);
+          }
+        }
         if (!c)
           throw new UsageError(
             `Edit ${n}: text not found: ${JSON.stringify(op.find)}. Run "ocsc-word read" to see the exact wording.`,
@@ -2451,14 +2479,103 @@ async function cmdEdit(o) {
             if (doc.replaceText(ph, String(v), true, rev)) filled.push(k);
           }
         }
+        // A form laid out as "label | blank" has no {{placeholders}}. Write the value into the
+        // empty cell beside the matching label and leave a cell that already has an answer.
+        const labelled = fillLabelledTableCells(doc.xml, op.fields);
+        doc.xml = labelled.xml;
+        filled.push(...labelled.filled);
+        // Word Content Controls (<w:sdt> with tag/alias) used by government/tender forms.
+        const controls = fillContentControls(doc.xml, op.fields);
+        doc.xml = controls.xml;
+        filled.push(...controls.filled);
         const parts = await doc.headerFooterFiles();
         const inHeaders = await withXml(doc, parts, () =>
           doc.fillFields(op.fields, parts),
         );
+        for (const [name, xml] of parts) {
+          let updatedXml = xml;
+          const next = fillLabelledTableCells(updatedXml, op.fields);
+          if (next.filled.length) {
+            updatedXml = next.xml;
+            filled.push(...next.filled);
+          }
+          const nextCtrl = fillContentControls(updatedXml, op.fields);
+          if (nextCtrl.filled.length) {
+            updatedXml = nextCtrl.xml;
+            filled.push(...nextCtrl.filled);
+          }
+          if (updatedXml !== xml) {
+            parts.set(name, updatedXml);
+            doc.zip.file(name, updatedXml);
+            if (headers.has(name)) headers.set(name, updatedXml);
+          }
+        }
+        const filledNames = [...new Set([...filled, ...inHeaders])];
+        const wanted = Object.entries(op.fields)
+          .filter(([, v]) => v !== null && v !== undefined && String(v).trim())
+          .map(([k]) => k);
+        const missed = wanted.filter((k) => !filledNames.includes(k));
+        if (wanted.length && missed.length === wanted.length) {
+          throw new UsageError(
+            `Edit ${n}: fill_fields matched none of ${wanted.map((k) => JSON.stringify(k)).join(", ")}. It fills {{placeholders}} and the empty table cell beside a matching label (for example Applicant Name | ). Run ocsc-word read, copy each label exactly, and try again.`,
+          );
+        }
         report.push({
           op: op.op,
-          filled: [...new Set([...filled, ...inHeaders])],
-          summary: `Filled ${[...new Set([...filled, ...inHeaders])].join(", ") || "nothing"}`,
+          filled: filledNames,
+          ...(missed.length ? { missed } : {}),
+          summary: `Filled ${filledNames.join(", ") || "nothing"}`,
+        });
+        break;
+      }
+      case "set_table_cell":
+      case "replace_table_cell": {
+        let res = setTableCell(doc.xml, op);
+        if (res.updated) {
+          doc.xml = res.xml;
+        } else {
+          // Also check header/footer tables (e.g. document control headers)
+          const hfParts = await doc.headerFooterFiles();
+          for (const [name, xml] of hfParts) {
+            const sub = setTableCell(xml, op);
+            if (sub.updated) {
+              res = sub;
+              doc.zip.file(name, sub.xml);
+              if (headers.has(name)) headers.set(name, sub.xml);
+              break;
+            }
+          }
+        }
+        if (!res.updated) {
+          throw new UsageError(`Edit ${n}: ${res.reason}`);
+        }
+        report.push({
+          op: op.op,
+          summary: res.summary,
+        });
+        break;
+      }
+      case "add_table_row": {
+        const res = addTableRow(doc.xml, op);
+        if (!res.updated) {
+          throw new UsageError(`Edit ${n}: ${res.reason}`);
+        }
+        doc.xml = res.xml;
+        report.push({
+          op: op.op,
+          summary: res.summary,
+        });
+        break;
+      }
+      case "delete_table_row": {
+        const res = deleteTableRow(doc.xml, op);
+        if (!res.updated) {
+          throw new UsageError(`Edit ${n}: ${res.reason}`);
+        }
+        doc.xml = res.xml;
+        report.push({
+          op: op.op,
+          summary: res.summary,
         });
         break;
       }
@@ -2579,15 +2696,27 @@ async function cmdEdit(o) {
             `Edit ${n}: format_text needs a colour, highlight, font, bold, italic, underline, size, spacing, align or fill.`,
           );
         const formatted = formatWordDocument(doc.xml, String(op.find), style, op.all !== false);
-        if (!formatted.count)
+        let total = formatted.count;
+        if (formatted.count) doc.xml = formatted.xml;
+        if (op.all !== false || total === 0) {
+          const hfParts = await doc.headerFooterFiles();
+          for (const [name, xml] of hfParts) {
+            if (op.all === false && total > 0) break;
+            const sub = formatWordDocument(xml, String(op.find), style, op.all !== false);
+            if (!sub.count) continue;
+            total += sub.count;
+            doc.zip.file(name, sub.xml);
+            if (headers.has(name)) headers.set(name, sub.xml);
+          }
+        }
+        if (!total)
           throw new UsageError(
             `Edit ${n}: text not found: ${JSON.stringify(op.find)}. Run "ocsc-word read" to see the exact wording.`,
           );
-        doc.xml = formatted.xml;
         report.push({
           op: op.op,
-          changed: formatted.count,
-          summary: `Styled "${clip(op.find)}" as ${stylePhrase(style)} (${formatted.count}×)`,
+          changed: total,
+          summary: `Styled "${clip(op.find)}" as ${stylePhrase(style)} (${total}×)`,
         });
         break;
       }
@@ -2614,7 +2743,7 @@ async function cmdEdit(o) {
       }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, add_comment, format_text, page_setup, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, add_comment, format_text, page_setup, fill_fields, set_table_cell, add_table_row, delete_table_row, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
         );
     }
   }

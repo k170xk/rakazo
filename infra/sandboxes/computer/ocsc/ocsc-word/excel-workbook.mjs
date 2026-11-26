@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import JSZip from "jszip";
 import { cellRange } from "./format-edits.mjs";
+import { assertXmlValid } from "./ooxml-safe.mjs";
 
 const MACRO = "application/vnd.ms-excel.sheet.macroEnabled.main+xml";
 const SHEET_MAIN = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml";
@@ -115,11 +116,63 @@ async function copyMissingRels(src, out, relsPath, sourcePart, copied) {
   out.file(relsPath, current);
 }
 
+// OOXML CT_Worksheet tail element order: inserting out of order (e.g. <drawing> after <extLst>)
+// causes Microsoft Excel to pop up "We found a problem with some content" and strip drawings/tables.
+const WORKSHEET_TAIL_ORDER = [
+  "drawing",
+  "legacyDrawing",
+  "legacyDrawingHF",
+  "drawingHF",
+  "picture",
+  "oleObjects",
+  "controls",
+  "webPublishItems",
+  "tableParts",
+  "extLst",
+];
+
+function insertWorksheetElement(xml, tag) {
+  const name = /<(\w+)/.exec(tag)?.[1];
+  if (!name) return xml.replace("</worksheet>", `${tag}</worksheet>`);
+  const rank = WORKSHEET_TAIL_ORDER.indexOf(name);
+  if (rank >= 0) {
+    for (let i = rank + 1; i < WORKSHEET_TAIL_ORDER.length; i += 1) {
+      const later = new RegExp(`<${WORKSHEET_TAIL_ORDER[i]}\\b`);
+      const m = later.exec(xml);
+      if (m) return xml.slice(0, m.index) + tag + xml.slice(m.index);
+    }
+  }
+  return xml.replace("</worksheet>", `${tag}</worksheet>`);
+}
+
 function putBack(xml, tag) {
   if (!tag || xml.includes(tag.slice(0, Math.min(tag.indexOf(" "), 24)))) return xml;
   const name = /<(\w+)/.exec(tag)?.[1];
   if (name && new RegExp(`<${name}\\b`).test(xml)) return xml;
-  return xml.replace("</worksheet>", `${tag}</worksheet>`);
+  return insertWorksheetElement(xml, tag);
+}
+
+/** Maps worksheet names -> zip part paths (e.g. "Summary" -> "xl/worksheets/sheet1.xml"). */
+async function sheetPartsByName(zip) {
+  const map = new Map();
+  const workbook = await zip.file("xl/workbook.xml")?.async("string");
+  const rels = await zip.file("xl/_rels/workbook.xml.rels")?.async("string");
+  if (!workbook || !rels) return map;
+  const relMap = new Map();
+  for (const m of rels.matchAll(/<Relationship\b[^>]*\/>/g)) {
+    const id = /\bId="([^"]+)"/.exec(m[0])?.[1];
+    const target = /\bTarget="([^"]+)"/.exec(m[0])?.[1];
+    if (id && target) {
+      relMap.set(id, target.startsWith("/") ? target.slice(1) : `xl/${target.replace(/^\//, "")}`);
+    }
+  }
+  for (const m of workbook.matchAll(/<sheet\b[^>]*>/g)) {
+    const name = /\bname="([^"]+)"/.exec(m[0])?.[1];
+    const rid = /\br:id="([^"]+)"/.exec(m[0])?.[1];
+    const part = rid ? relMap.get(rid) : null;
+    if (name && part) map.set(name, part);
+  }
+  return map;
 }
 
 /** Copies charts, drawings, pivot tables, slicers and macros back onto an ExcelJS save. */
@@ -132,14 +185,55 @@ export async function restoreOfficeParts(originalBytes, savedBytes) {
   let book = await out.file("xl/workbook.xml")?.async("string");
   const caches = originalBook && /<pivotCaches\b[\s\S]*?<\/pivotCaches>/.exec(originalBook)?.[0];
   if (caches && book && !book.includes("<pivotCaches")) {
-    out.file("xl/workbook.xml", book.replace("</workbook>", `${caches}</workbook>`));
+    const extAt = book.indexOf("<extLst");
+    const nextBook =
+      extAt >= 0
+        ? book.slice(0, extAt) + caches + book.slice(extAt)
+        : book.replace("</workbook>", `${caches}</workbook>`);
+    out.file("xl/workbook.xml", nextBook);
   }
+  // Pair source and output sheets by sheet name so adding/deleting/reordering tabs never
+  // restores charts/drawings/tables onto the wrong sheet.
+  const srcByName = await sheetPartsByName(src);
+  const outByName = await sheetPartsByName(out);
+  const pairs = [];
+  const matchedSrc = new Set();
+  const matchedOut = new Set();
+  for (const [sheetName, srcPart] of srcByName) {
+    const outPart = outByName.get(sheetName);
+    if (outPart) {
+      pairs.push([srcPart, outPart]);
+      matchedSrc.add(srcPart);
+      matchedOut.add(outPart);
+    }
+  }
+  // Fallback for renamed sheets (same sheet index, not already matched)
   for (const name of Object.keys(src.files)) {
     if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(name)) continue;
-    const relsPath = name.replace("xl/worksheets/", "xl/worksheets/_rels/") + ".rels";
-    await copyMissingRels(src, out, relsPath, name, copied);
-    const original = await src.file(name).async("string");
-    let current = await out.file(name)?.async("string");
+    if (matchedSrc.has(name) || matchedOut.has(name) || !out.files[name]) continue;
+    pairs.push([name, name]);
+  }
+  for (const [srcPart, outPart] of pairs) {
+    if (!src.files[srcPart] || !out.files[outPart]) continue;
+    const srcRelsPath = srcPart.replace("xl/worksheets/", "xl/worksheets/_rels/") + ".rels";
+    const outRelsPath = outPart.replace("xl/worksheets/", "xl/worksheets/_rels/") + ".rels";
+    const originalRels = await src.file(srcRelsPath)?.async("string");
+    if (originalRels) {
+      let currentRels = (await out.file(outRelsPath)?.async("string")) ?? emptyRels();
+      for (const tag of originalRels.match(/<Relationship\b[^>]*\/>/g) ?? []) {
+        const target = /\bTarget="([^"]+)"/.exec(tag)?.[1];
+        const type = /\bType="([^"]+)"/.exec(tag)?.[1];
+        if (!target || !type || !EXTRA_REL.test(`${type} ${target}`)) continue;
+        if (currentRels.includes(`Target="${target}"`)) continue;
+        const id = /\bId="([^"]+)"/.exec(tag)?.[1];
+        const added = ensureRel(currentRels, type, target, id);
+        currentRels = added.xml;
+        await copyPart(src, out, resolveTarget(srcPart, target), copied);
+      }
+      out.file(outRelsPath, currentRels);
+    }
+    const original = await src.file(srcPart).async("string");
+    let current = await out.file(outPart)?.async("string");
     if (!current) continue;
     for (const element of ["drawing", "legacyDrawing", "picture", "tableParts"]) {
       const block =
@@ -148,7 +242,7 @@ export async function restoreOfficeParts(originalBytes, savedBytes) {
           : new RegExp(`<${element}\\b[^>]*/>`).exec(original)?.[0];
       current = putBack(current, block);
     }
-    out.file(name, current);
+    out.file(outPart, current);
   }
   const srcTypes = await src.file("[Content_Types].xml")?.async("string");
   if (srcTypes?.includes(MACRO) && src.files["xl/vbaProject.bin"]) {
@@ -255,7 +349,7 @@ export async function addCharts(bytes, charts) {
       zip.file(relsPath, rels);
       sheet = sheet.includes("<drawing ")
         ? sheet
-        : sheet.replace("</worksheet>", `<drawing r:id="${added.id}"/></worksheet>`);
+        : insertWorksheetElement(sheet, `<drawing r:id="${added.id}"/>`);
       zip.file(sheetPath, sheet);
       zip.file(
         drawingPath,
@@ -357,6 +451,7 @@ export async function sanitizeWorkbookXml(bytes) {
     if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(name)) continue;
     const xml = await zip.file(name).async("string");
     const next = stripPageSetup(xml);
+    assertXmlValid(next, name);
     if (next !== xml) {
       zip.file(name, next);
       changed = true;
@@ -366,6 +461,7 @@ export async function sanitizeWorkbookXml(bytes) {
   if (zip.file(bookName)) {
     const xml = await zip.file(bookName).async("string");
     const next = absolutizePrintRefs(xml);
+    assertXmlValid(next, bookName);
     if (next !== xml) {
       zip.file(bookName, next);
       changed = true;
@@ -375,6 +471,7 @@ export async function sanitizeWorkbookXml(bytes) {
   if (zip.file(typesName)) {
     const xml = await zip.file(typesName).async("string");
     const next = ensureBinContentType(xml, Object.keys(zip.files));
+    assertXmlValid(next, typesName);
     if (next !== xml) {
       zip.file(typesName, next);
       changed = true;

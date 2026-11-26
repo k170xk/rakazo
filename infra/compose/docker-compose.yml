@@ -380,6 +380,8 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # Child-process OOM counts live in the host cgroup and disappear when the container exits.
+      - /sys/fs/cgroup:/host-cgroup:ro
       - ../../data:/data
     depends_on:
       computer:

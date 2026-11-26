@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
-import { expandSharedFormulas, sanitizeWorkbookXml } from "./excel-workbook.mjs";
+import { addCharts, expandSharedFormulas, restoreOfficeParts, sanitizeWorkbookXml } from "./excel-workbook.mjs";
 
 async function sheetXml(bytes) {
   const zip = await JSZip.loadAsync(bytes);
@@ -69,4 +69,39 @@ test("print areas become absolute and a printer-settings part keeps a content ty
   assert.doesNotMatch(sheet, /Dpi=/);
   assert.match(sheet, /fitToWidth="1"/);
   assert.match(types, /Extension="bin"/);
+});
+
+test("restoreOfficeParts keeps OOXML element order (drawing before tableParts and extLst) and matches sheets by name", async () => {
+  // Build a workbook with a chart on "Costs" and an <extLst> tail element
+  const book = new ExcelJS.Workbook();
+  const s1 = book.addWorksheet("Costs");
+  s1.addRow(["Item", "Amount"]);
+  s1.addRow(["Steel", 100]);
+  s1.addRow(["Concrete", 200]);
+  const baseBytes = await book.xlsx.writeBuffer();
+  const withChart = await addCharts(baseBytes, [{ sheet: "Costs", type: "column", range: "A1:B3", title: "Costs" }]);
+
+  // Simulate saving a version where a new sheet "Cover" was added BEFORE "Costs" AND Costs has <extLst>
+  const book2 = new ExcelJS.Workbook();
+  book2.addWorksheet("Cover").getCell("A1").value = "Intro";
+  const s2 = book2.addWorksheet("Costs");
+  s2.addRow(["Item", "Amount"]);
+  s2.addRow(["Steel", 150]);
+  s2.addRow(["Concrete", 200]);
+  const rawSaved = await book2.xlsx.writeBuffer();
+  const savedZip = await JSZip.loadAsync(rawSaved);
+  const costsXml = await savedZip.file("xl/worksheets/sheet2.xml").async("string");
+  savedZip.file("xl/worksheets/sheet2.xml", costsXml.replace("</worksheet>", "<extLst><ext uri=\"{test}\"/></extLst></worksheet>"));
+  const savedWithExt = await savedZip.generateAsync({ type: "nodebuffer" });
+
+  const restored = await restoreOfficeParts(withChart, savedWithExt);
+  const outZip = await JSZip.loadAsync(restored.buffer);
+  const coverOut = await outZip.file("xl/worksheets/sheet1.xml").async("string");
+  const costsOut = await outZip.file("xl/worksheets/sheet2.xml").async("string");
+  assert.ok(!coverOut.includes("<drawing"), "chart must NOT land on Cover (sheet1)");
+  assert.ok(costsOut.includes("<drawing"), "chart restored onto Costs (sheet2)");
+  assert.ok(
+    costsOut.indexOf("<drawing") < costsOut.indexOf("<extLst"),
+    "<drawing> MUST come before <extLst> in CT_Worksheet",
+  );
 });

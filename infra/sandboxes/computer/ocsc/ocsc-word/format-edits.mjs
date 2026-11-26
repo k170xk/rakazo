@@ -4,6 +4,7 @@
  * applied to the existing text so the rest of the file stays as it is.
  */
 
+import { findSmartMatches, topLevelElements } from "./ooxml-safe.mjs";
 import { firstElement, mapParagraphs } from "./word-paragraphs.mjs";
 
 const NAMED = {
@@ -258,18 +259,12 @@ function plainWordRun(xml) {
 }
 
 function paint(text, find, all) {
+  const hits = findSmartMatches(text, find, { all });
   const marks = new Array(text.length).fill(false);
-  let count = 0;
-  let from = 0;
-  while (from <= text.length) {
-    const at = text.indexOf(find, from);
-    if (at < 0) break;
-    for (let i = 0; i < find.length; i += 1) marks[at + i] = true;
-    count += 1;
-    if (!all) break;
-    from = at + Math.max(find.length, 1);
+  for (const hit of hits) {
+    for (let i = hit.start; i < hit.end; i += 1) marks[i] = true;
   }
-  return { marks, count };
+  return { marks, count: hits.length };
 }
 
 function paintsCharacters(style) {
@@ -371,8 +366,6 @@ function shadeCell(cell, hex) {
 
 /** Colours and styles `find` inside one Word paragraph. */
 export function formatWordParagraph(paragraph, find, style, all = true) {
-  if (!paragraph.includes(find) && !wordText(paragraph).includes(find))
-    return { paragraph, count: 0 };
   const runs = [...paragraph.matchAll(/<w:r(?=[\s>])[^>]*>[\s\S]*?<\/w:r>/g)].map((m) => ({
     index: m.index,
     whole: m[0],
@@ -381,7 +374,6 @@ export function formatWordParagraph(paragraph, find, style, all = true) {
     rPr: firstElement(m[0], "rPr"),
   }));
   const full = runs.map((run) => run.text).join("");
-  if (!full.includes(find)) return { paragraph, count: 0 };
   const { marks, count } = paint(full, find, all);
   if (!count) return { paragraph, count: 0 };
   let paragraphOut = paragraph;
@@ -510,10 +502,28 @@ export function formatWordDocument(xml, find, style, all = true) {
   if (background) {
     const hex = colourOrThrow(background, "Background");
     const wanted = find.replace(/\s+/g, " ").trim();
-    next = next.replace(/<w:tc\b[^>]*>[\s\S]*?<\/w:tc>/g, (cell) => {
-      const text = wordText(cell).replace(/\s+/g, " ").trim();
-      return text === wanted ? shadeCell(cell, hex) : cell;
-    });
+    const shadeCellsIn = (source) => {
+      const cells = topLevelElements(source, "w:tc");
+      if (!cells.length) return source;
+      let out = "";
+      let last = 0;
+      for (const cell of cells) {
+        out += source.slice(last, cell.from);
+        last = cell.to;
+        if (/<w:tbl(?=[\s>])/.test(cell.xml)) {
+          out += shadeCellsIn(cell.xml.slice(0, cell.xml.indexOf(">") + 1)) +
+            shadeCellsIn(cell.xml.slice(cell.xml.indexOf(">") + 1, -"</w:tc>".length)) +
+            "</w:tc>";
+        } else {
+          const text = wordText(cell.xml).replace(/\s+/g, " ").trim();
+          out += text === wanted || findSmartMatches(text, wanted, { all: false }).some((h) => h.start === 0 && h.end === text.length)
+            ? shadeCell(cell.xml, hex)
+            : cell.xml;
+        }
+      }
+      return out + source.slice(last);
+    };
+    next = shadeCellsIn(next);
   }
   return { xml: next, count };
 }
@@ -559,18 +569,18 @@ function pptxAlign(paragraph, align) {
     return paragraph.replace(/<a:pPr\b[^>]*\/>/, (tag) => setAttr(tag, "algn", value));
   if (/<a:pPr\b[^>]*>/.test(paragraph))
     return paragraph.replace(/<a:pPr\b[^>]*>/, (tag) => setAttr(tag, "algn", value));
-  return paragraph.replace("<a:p>", `<a:p><a:pPr algn="${value}"/>`);
+  return paragraph.replace(/<a:p(?=[\s>])[^>]*>/, (open) => `${open}<a:pPr algn="${value}"/>`);
 }
 
 /** Colours and styles `find` inside one PowerPoint paragraph. */
 export function formatPptxParagraph(paragraph, find, style, all = true) {
-  const runs = [...paragraph.matchAll(/<a:r\b[^>]*>([\s\S]*?)<\/a:r>/g)].map((m) => {
-    const text = /<a:t>([\s\S]*?)<\/a:t>/.exec(m[1]);
+  const runs = [...paragraph.matchAll(/<a:r(?=[\s>])[^>]*>([\s\S]*?)<\/a:r>/g)].map((m) => {
+    const text = /<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/.exec(m[1]);
     return { whole: m[0], index: m.index, inner: m[1], text: text ? unesc(text[1]) : "" };
   });
   const full = runs.map((run) => run.text).join("");
-  if (!find || !full.includes(find)) return { paragraph, count: 0 };
   const { marks, count } = paint(full, find, all);
+  if (!count) return { paragraph, count: 0 };
   let out = "";
   let last = 0;
   let pos = 0;
@@ -604,7 +614,7 @@ export function formatPptxParagraph(paragraph, find, style, all = true) {
 /** Applies a PowerPoint text formatting edit to a slide. */
 export function formatPptxXml(xml, find, style, all = true) {
   let count = 0;
-  const next = xml.replace(/<a:p>[\s\S]*?<\/a:p>/g, (paragraph) => {
+  const next = xml.replace(/<a:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/a:p>/g, (paragraph) => {
     if (!all && count) return paragraph;
     const result = formatPptxParagraph(paragraph, find, style, all);
     count += result.count;
@@ -685,8 +695,8 @@ export function formatPptxShape(xml, shapeId, style) {
     let shaped = sp;
     if (style.fill) shaped = shapeFill(shaped, colourOrThrow(style.fill, "Fill"));
     if (style.color || style.bold != null || style.size) {
-      shaped = shaped.replace(/<a:p>[\s\S]*?<\/a:p>/g, (paragraph) => {
-        const text = [...paragraph.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map((m) => unesc(m[1])).join("");
+      shaped = shaped.replace(/<a:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/a:p>/g, (paragraph) => {
+        const text = [...paragraph.matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g)].map((m) => unesc(m[1])).join("");
         if (!text) return paragraph;
         return formatPptxParagraph(paragraph, text, style, true).paragraph;
       });

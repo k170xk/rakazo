@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, realpathSync } from "node:fs";
-import { mkdir, utimes } from "node:fs/promises";
+import { mkdir, readFile, utimes } from "node:fs/promises";
 import http from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -117,8 +117,8 @@ import {
   listToolCacheFiles,
   memoryRoomFor,
   openToolCacheFile,
+  cgroupMemoryEventsPaths,
   prepareToolRunMount,
-  printedOutOfMemory,
   slotsPerPerson,
   sweepToolCache,
   TOOL_CACHE,
@@ -135,6 +135,7 @@ import {
   toolRunLimits,
   toolRunLocalMount,
   toolRunRequestSchema,
+  toolRunOutOfMemory,
   toolRunSlots,
   toolRunVideoSlots,
   writeToolCacheFile,
@@ -794,9 +795,9 @@ app.post("/tool-runs/run", async (c) => {
               }),
             );
             const demuxer = createDockerStreamDemuxer();
-            let stderrTail = "";
+            let outputTail = "";
             const forward = (event: { stream: "stdout" | "stderr"; data: string }) => {
-              if (event.stream === "stderr") stderrTail = (stderrTail + event.data).slice(-4096);
+              outputTail = (outputTail + event.data).slice(-8192);
               send({ type: event.stream, data: event.data });
             };
             const output = (await container.attach({
@@ -814,6 +815,21 @@ app.post("/tool-runs/run", async (c) => {
             });
             await container.start();
             const running = container;
+            let memoryEvents = "";
+            // The cgroup directory disappears as soon as the container exits, so this has to be
+            // read while the command is still running. Docker's OOMKilled flag is the other copy.
+            const sampleMemory = async () => {
+              const info = await running.inspect().catch(() => null);
+              const id = info?.Id;
+              if (!id) return;
+              for (const file of cgroupMemoryEventsPaths(id)) {
+                const text = await readFile(file, "utf8").catch(() => "");
+                if (!text) continue;
+                memoryEvents = text;
+                return;
+              }
+            };
+            const memoryTimer = setInterval(() => void sampleMemory(), 1000);
             const limitMs = large ? Math.max(timeoutMs, LARGE_TOOL_RUN_TIMEOUT_MS) : timeoutMs;
             let timedOut = false;
             const stop = () => void running.kill().catch(() => undefined);
@@ -828,19 +844,24 @@ app.post("/tool-runs/run", async (c) => {
               code = waited.StatusCode ?? 1;
             } finally {
               clearTimeout(timer);
+              clearInterval(memoryTimer);
               abort.removeEventListener("abort", stop);
+              await sampleMemory();
             }
             await Promise.race([drained, new Promise((resolve) => setTimeout(resolve, 2000))]);
             for (const event of demuxer.finish()) forward(event);
-            const outOfMemory =
-              !timedOut &&
-              !abort.aborted &&
-              code !== 0 &&
-              (printedOutOfMemory(stderrTail) ||
-                (await running
-                  .inspect()
-                  .then((info) => info.State?.OOMKilled === true)
-                  .catch(() => code === 137)));
+            const dockerOomKilled = await running
+              .inspect()
+              .then((info) => info.State?.OOMKilled === true)
+              .catch(() => code === 137);
+            const outOfMemory = toolRunOutOfMemory({
+              timedOut,
+              aborted: abort.aborted,
+              code,
+              output: outputTail,
+              dockerOomKilled,
+              memoryEvents,
+            });
             return { code, timedOut, limitMs, memory, outOfMemory };
           } finally {
             await container?.remove({ force: true }).catch(() => undefined);

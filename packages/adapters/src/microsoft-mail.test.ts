@@ -9,6 +9,7 @@ import {
   assertMailRead,
   bodyText,
   MAIL_BODY_CHARS,
+  mailNextPath,
   messageFilter,
   OUTLOOK_SCOPES,
   OUTLOOK_TOOL_NAMES,
@@ -215,15 +216,33 @@ describe("Outlook tools", () => {
     });
   });
 
-  it("returns up to 100 at once with shorter previews, and says where older mail starts", async () => {
+  it("returns up to 100 at once with shorter previews, and pages with Graph's nextLink", async () => {
     const long = { ...message, bodyPreview: "x".repeat(255) };
     const page = Array.from({ length: 100 }, (_, index) => ({ ...long, id: `msg-${index}` }));
-    const { graph, calls } = fakeGraph({ "/me/mailFolders/inbox/messages": { value: page } });
+    const next =
+      "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$skip=137&$top=100&$orderby=receivedDateTime%20desc&$select=id";
+    const { graph, calls } = fakeGraph({
+      "/me/mailFolders/inbox/messages": {
+        value: page,
+        "@odata.nextLink": next,
+      },
+    });
     const [event] = await run(graph, "outlook_list_messages", { limit: 500 });
     expect(calls[0]!.path).toContain("$top=100");
-    const data = (event as { data: { messages: Array<{ preview: string }> } }).data;
-    expect(data).toMatchObject({ more: true, next_skip: 100 });
+    const data = (event as { data: { messages: Array<{ preview: string }>; page?: string } }).data;
+    expect(data).toMatchObject({
+      more: true,
+      page: "/me/mailFolders/inbox/messages?$skip=137&$top=100&$orderby=receivedDateTime%20desc&$select=id",
+    });
+    expect(data).not.toHaveProperty("next_skip");
     expect(data.messages[0]!.preview).toHaveLength(141);
+    expect(mailNextPath(next)).toBe(data.page);
+
+    const { graph: pageTwo, calls: pageCalls } = fakeGraph({
+      "/me/mailFolders/inbox/messages": { value: [long] },
+    });
+    await run(pageTwo, "outlook_list_messages", { page: data.page });
+    expect(pageCalls[0]!.path).toBe(data.page);
 
     const { graph: small, calls: smallCalls } = fakeGraph({
       "/me/mailFolders/inbox/messages": { value: [long] },
@@ -245,17 +264,31 @@ describe("Outlook tools", () => {
     ).toEqual(["msg-1", "msg-2"]);
   });
 
-  it("searches the whole mailbox or one folder", async () => {
+  it("searches the whole mailbox or one folder, and pages with Graph's nextLink", async () => {
+    const next =
+      "https://graph.microsoft.com/v1.0/me/messages?$search=%22budget%22&$skiptoken=abc&$top=25";
     const { graph, calls } = fakeGraph({
-      "/me/messages?": { value: [] },
+      "/me/messages?": {
+        value: [message],
+        "@odata.nextLink": next,
+      },
       "/me/mailFolders/sentitems/messages?": { value: [message] },
     });
     expect((await run(graph, "outlook_search", { query: "budget" }))[0]).toMatchObject({
-      data: { results: [], note: "Nothing matched." },
+      data: {
+        more: true,
+        page: "/me/messages?$search=%22budget%22&$skiptoken=abc&$top=25",
+        results: [{ message_id: "msg-1" }],
+      },
     });
     await run(graph, "outlook_search", { query: "from:anne", folder_id: "SentItems" });
     expect(calls[0]!.path).toContain(`$search=${encodeURIComponent('"budget"')}`);
     expect(calls[1]!.path.startsWith("/me/mailFolders/sentitems/messages?")).toBe(true);
+
+    const empty = fakeGraph({ "/me/messages?": { value: [] } });
+    expect((await run(empty.graph, "outlook_search", { query: "zzzz" }))[0]).toMatchObject({
+      data: { results: [], more: false, note: "Nothing matched." },
+    });
   });
 
   it("reads a message as text, cut to size, listing real attachments only", async () => {
